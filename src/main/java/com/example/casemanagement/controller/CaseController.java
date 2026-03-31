@@ -23,4 +23,19 @@ public class CaseController {
     public Case create(@RequestBody Case c) {
         return service.create(c);
     }
+
+    @GetMapping("/{id}")
+    public Case getCaseById(@PathVariable Long id) {
+        return service.getCaseById(id);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteCase(@PathVariable Long id) {
+        service.deleteCase(id);
+    }
+
+    @PutMapping("/{id}")
+    public Case updatedCase(@PathVariable Long id, @RequestBody Case c) {
+        return service.updateCase(id, c);
+    }
 }

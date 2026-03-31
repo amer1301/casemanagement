@@ -21,4 +21,20 @@ public class CaseService {
     public Case create(Case c) {
         return repo.save(c);
     }
+
+    public Case getCaseById(Long id) {
+        return repo.findById(id).orElse(null);
+    }
+
+    public void deleteCase(Long id) {
+        repo.deleteById(id);
+    }
+
+    public Case updateCase(Long id, Case updatedCase) {
+        return repo.findById(id).map(c -> {
+            c.setTitle(updatedCase.getTitle());
+            c.setDescription(updatedCase.getDescription());
+            return repo.save(c);
+        }).orElse(null);
+    }
 }
