@@ -1,0 +1,11 @@
+### Skapa nytt case
+POST http://localhost:8080/cases
+Content-Type: application/json
+
+{
+  "title": "Test case",
+  "description": "Mitt första via HTTP client"
+}
+
+### Hämta alla cases
+GET http://localhost:8080/cases
