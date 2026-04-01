@@ -4,6 +4,8 @@ import com.example.casemanagement.model.Case;
 import com.example.casemanagement.service.CaseService;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 @RestController
 @RequestMapping("/cases")
@@ -20,7 +22,7 @@ public class CaseController {
     }
 
     @PostMapping
-    public Case create(@RequestBody Case c) {
+    public Case create(@Valid @RequestBody Case c) {
         return service.create(c);
     }
 
@@ -35,7 +37,7 @@ public class CaseController {
     }
 
     @PutMapping("/{id}")
-    public Case updatedCase(@PathVariable Long id, @RequestBody Case c) {
-        return service.updateCase(id, c);
+    public Case updatedCase(@PathVariable Long id, @Valid @RequestBody Case c) {
+        return service.update(id, c);
     }
 }

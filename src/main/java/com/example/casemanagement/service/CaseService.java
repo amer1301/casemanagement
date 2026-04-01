@@ -1,5 +1,6 @@
 package com.example.casemanagement.service;
 
+import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.repository.CaseRepository;
 import org.springframework.stereotype.Service;
@@ -23,18 +24,22 @@ public class CaseService {
     }
 
     public Case getCaseById(Long id) {
-        return repo.findById(id).orElse(null);
+
+        return repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case med id " + id + " hittades inte"));
     }
 
     public void deleteCase(Long id) {
         repo.deleteById(id);
     }
 
-    public Case updateCase(Long id, Case updatedCase) {
-        return repo.findById(id).map(c -> {
-            c.setTitle(updatedCase.getTitle());
-            c.setDescription(updatedCase.getDescription());
-            return repo.save(c);
-        }).orElse(null);
+    public Case update(Long id, Case updatedCase) {
+        Case existing = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found with id " + id));
+
+        existing.setTitle(updatedCase.getTitle());
+        existing.setDescription(updatedCase.getDescription());
+
+        return repo.save(existing);
     }
 }

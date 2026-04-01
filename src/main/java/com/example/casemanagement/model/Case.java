@@ -1,9 +1,8 @@
 package com.example.casemanagement.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "cases")
@@ -12,7 +11,12 @@ public class Case {
     @GeneratedValue
     private Long id;
 
+    @NotBlank(message = "Titeln får inte vara tom")
+    @Size(min = 3, max = 100, message = "Titeln måste vara mellan 3 och 100 tecken")
     private String title;
+
+    @NotBlank(message =  "Beskrivning får inte vara tom")
+    @Size(max = 500, message = "Beskrivning får max vara 500 tecken")
     private String description;
 
     // Tom konstruktor
@@ -28,6 +32,10 @@ public class Case {
     // Get & Set
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getTitle() {
