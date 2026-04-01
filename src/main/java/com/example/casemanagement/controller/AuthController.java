@@ -1,5 +1,6 @@
 package com.example.casemanagement.controller;
 
+import com.example.casemanagement.dto.LoginRequest;
 import com.example.casemanagement.model.User;
 import com.example.casemanagement.service.AuthService;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public User register(@RequestParam String email, @RequestParam String password) {
-        return authService.register(email, password);
+    public User register(@RequestBody LoginRequest request) {
+        return authService.register(request.getEmail(), request.getPassword());
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestBody LoginRequest request) {
+        return authService.login(request.getEmail(), request.getPassword());
     }
 }
