@@ -3,6 +3,7 @@ package com.example.casemanagement.controller;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.service.CaseService;
 import org.springframework.web.bind.annotation.*;
+import com.example.casemanagement.model.CaseStatus;
 
 import jakarta.validation.Valid;
 
@@ -36,8 +37,8 @@ public class CaseController {
         service.deleteCase(id);
     }
 
-    @PutMapping("/{id}")
-    public Case updatedCase(@PathVariable Long id, @Valid @RequestBody Case c) {
-        return service.update(id, c);
+    @PutMapping("/{id}/status")
+    public Case updateStatus(@PathVariable Long id, @RequestParam CaseStatus status) {
+        return service.updateStatus(id, status);
     }
 }

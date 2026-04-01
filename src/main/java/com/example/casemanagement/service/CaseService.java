@@ -4,6 +4,8 @@ import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.repository.CaseRepository;
 import org.springframework.stereotype.Service;
+import com.example.casemanagement.model.CaseStatus;
+import java.time.LocalDateTime;
 
 import java.util.List;
 
@@ -20,6 +22,8 @@ public class CaseService {
     }
 
     public Case create(Case c) {
+        c.setStatus(CaseStatus.SUBMITTED);
+        c.setCreatedAt(LocalDateTime.now());
         return repo.save(c);
     }
 
@@ -41,5 +45,18 @@ public class CaseService {
         existing.setDescription(updatedCase.getDescription());
 
         return repo.save(existing);
+    }
+
+    public Case updateStatus(Long id, CaseStatus newStatus) {
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+
+        if (c.getStatus() != CaseStatus.SUBMITTED) {
+            throw new IllegalStateException("Invalid status transition");
+        }
+
+        c.setStatus(newStatus);
+
+        return repo.save(c);
     }
 }

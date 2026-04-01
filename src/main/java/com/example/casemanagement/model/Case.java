@@ -4,20 +4,27 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "cases")
 public class Case {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank(message = "Titeln får inte vara tom")
     @Size(min = 3, max = 100, message = "Titeln måste vara mellan 3 och 100 tecken")
     private String title;
 
-    @NotBlank(message =  "Beskrivning får inte vara tom")
+    @NotBlank(message = "Beskrivning får inte vara tom")
     @Size(max = 500, message = "Beskrivning får max vara 500 tecken")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    private CaseStatus status;
+
+    private LocalDateTime createdAt;
 
     // Tom konstruktor
     public Case() {
@@ -52,5 +59,21 @@ public class Case {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public CaseStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CaseStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
