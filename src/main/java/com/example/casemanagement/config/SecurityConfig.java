@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .httpBasic(httpBasic -> httpBasic.disable())   // 🔥 VIKTIG
+                .formLogin(form -> form.disable())             // 🔥 VIKTIG
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

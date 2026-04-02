@@ -26,6 +26,10 @@ public class Case {
 
     private LocalDateTime createdAt;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     // Tom konstruktor
     public Case() {
     }
@@ -75,5 +79,13 @@ public class Case {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

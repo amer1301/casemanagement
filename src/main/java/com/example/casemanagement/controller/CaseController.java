@@ -41,4 +41,9 @@ public class CaseController {
     public Case updateStatus(@PathVariable Long id, @RequestParam CaseStatus status) {
         return service.updateStatus(id, status);
     }
+
+    @GetMapping("/my")
+    public List<Case> getMyCase() {
+        return service.getMyCases();
+    }
 }
