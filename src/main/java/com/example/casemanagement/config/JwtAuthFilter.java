@@ -8,12 +8,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.example.casemanagement.service.JwtService;
 
 import java.io.IOException;
 import java.util.Collections;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+    private final JwtService jwtService;
+
+    public JwtAuthFilter(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -30,7 +36,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        if (email != null) {
+        String email = jwtService.extractEmail(token);
+
+        if (email != null && jwtService.isTokenValid(token)) {
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             email,
