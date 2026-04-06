@@ -79,9 +79,6 @@ public class CaseService {
 
         User currentUser = getCurrentUser();
 
-        System.out.println("Current user email: " + currentUser.getEmail());
-        System.out.println("Current user role: " + currentUser.getRole());
-
         // Endast ADMIN får ändra
         if (currentUser.getRole() != Role.ADMIN) {
             throw new RuntimeException("Only Admin can update status");
