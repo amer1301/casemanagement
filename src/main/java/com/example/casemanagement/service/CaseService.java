@@ -4,6 +4,7 @@ import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.model.User;
+import com.example.casemanagement.model.Role;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
 
@@ -18,6 +19,15 @@ public class CaseService {
     private final CaseRepository repo;
     private final UserRepository userRepository;
 
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
     public CaseService(CaseRepository repo, UserRepository userRepository) {
         this.repo = repo;
         this.userRepository = userRepository;
@@ -28,21 +38,14 @@ public class CaseService {
     }
 
     public List<Case> getMyCases() {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return repo.findByUserEmail(email);
+        User user = getCurrentUser();
+        return repo.findByUser(user);
     }
 
     public Case create(Case c) {
 
-        String email = SecurityContextHolder.getContext()
-                        .getAuthentication()
-                                .getName();
+        User user = getCurrentUser();
 
-        User user = userRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("User not found"));
         c.setUser(user);
         c.setStatus(CaseStatus.SUBMITTED);
         c.setCreatedAt(LocalDateTime.now());
@@ -70,11 +73,28 @@ public class CaseService {
     }
 
     public Case updateStatus(Long id, CaseStatus newStatus) {
+
         Case c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
 
+        User currentUser = getCurrentUser();
+
+        System.out.println("Current user email: " + currentUser.getEmail());
+        System.out.println("Current user role: " + currentUser.getRole());
+
+        // Endast ADMIN får ändra
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Only Admin can update status");
+        }
+
+        // Endast från SUBMITTED
         if (c.getStatus() != CaseStatus.SUBMITTED) {
             throw new IllegalStateException("Invalid status transition");
+        }
+
+        // ADMIN får inte godkänna sitt eget case
+        if (c.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Cannot approve your own case");
         }
 
         c.setStatus(newStatus);
