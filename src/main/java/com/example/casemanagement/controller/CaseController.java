@@ -11,6 +11,7 @@ import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.service.CaseLogService;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 @RestController
@@ -26,8 +27,11 @@ public class CaseController {
     }
 
     @GetMapping
-    public List<CaseDTO> getAll() {
-        return service.getAll();
+    public Page<CaseDTO> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+                return service.getAll(page, size);
     }
 
     @PostMapping

@@ -11,6 +11,10 @@ import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -40,11 +44,11 @@ public class CaseService {
         this.caseLogService = caseLogService;
     }
 
-    public List<CaseDTO> getAll() {
-        return repo.findAll()
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<CaseDTO> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return repo.findAll(pageable)
+                .map(this::mapToDTO);
     }
 
     public List<CaseDTO> getMyCases() {
