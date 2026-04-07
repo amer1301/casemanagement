@@ -6,11 +6,11 @@ import jakarta.validation.constraints.Size;
 public class CreateCaseDTO {
 
     @NotBlank(message = "Titeln får inte vara tom")
-        @Size(min = 3, max = 100)
+        @Size(min = 3, max = 100, message = "Titeln måste vara mellan 3 och 100 tecken")
     private String title;
 
     @NotBlank(message = "Beskrivning får inte vara tom")
-    @Size(max = 500)
+    @Size(max = 500, message = "Beskrivningen får max vara 500 tecken")
     private String description;
 
     // Get & Set
