@@ -14,6 +14,7 @@ import com.example.casemanagement.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,8 +45,8 @@ public class CaseService {
         this.caseLogService = caseLogService;
     }
 
-    public Page<CaseDTO> getAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<CaseDTO> getAll(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy). descending());
 
         return repo.findAll(pageable)
                 .map(this::mapToDTO);
@@ -163,5 +164,12 @@ public class CaseService {
                 c.getCreatedAt(),
                 c.getUser().getEmail()
         );
+    }
+
+    public List<CaseDTO> getByStatus(CaseStatus status) {
+        return repo.findByStatus(status)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 }

@@ -27,11 +27,17 @@ public class CaseController {
     }
 
     @GetMapping
-    public Page<CaseDTO> getAll(
+    public Object getAll(
+            @RequestParam(required = false) CaseStatus status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy) {
 
-                return service.getAll(page, size);
+        if (status != null) {
+            return service.getByStatus(status);
+        }
+
+        return service.getAll(page, size, sortBy);
     }
 
     @PostMapping
