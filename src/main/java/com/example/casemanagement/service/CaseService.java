@@ -1,10 +1,13 @@
 package com.example.casemanagement.service;
 
+import com.example.casemanagement.dto.CaseDTO;
 import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.model.User;
 import com.example.casemanagement.model.Role;
+import com.example.casemanagement.dto.CreateCaseDTO;
+import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
 
@@ -37,18 +40,28 @@ public class CaseService {
         this.caseLogService = caseLogService;
     }
 
-    public List<Case> getAll() {
-        return repo.findAll();
+    public List<CaseDTO> getAll() {
+        return repo.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public List<Case> getMyCases() {
+    public List<CaseDTO> getMyCases() {
         User user = getCurrentUser();
-        return repo.findByUser(user);
+        return repo.findByUser(user)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public Case create(Case c) {
+    public CaseDTO create(CreateCaseDTO dto) {
 
         User user = getCurrentUser();
+
+        Case c = new Case();
+        c.setTitle(dto.getTitle());
+        c.setDescription(dto.getDescription());
 
         c.setUser(user);
         c.setStatus(CaseStatus.SUBMITTED);
@@ -62,12 +75,14 @@ public class CaseService {
                 "Case created"
         );
 
-        return saved;
+        return mapToDTO(saved);
     }
 
-    public Case getCaseById(Long id) {
-        return repo.findById(id)
+    public CaseDTO getCaseById(Long id) {
+        Case c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case med id " + id + " hittades inte"));
+
+        return mapToDTO(c);
     }
 
     public void deleteCase(Long id) {
@@ -117,12 +132,12 @@ public class CaseService {
         return updated;
     }
 
-    public Case update(Long id, Case updatedCase) {
+    public CaseDTO update(Long id, UpdateCaseDTO dto) {
         Case existing = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found with id " + id));
 
-        existing.setTitle(updatedCase.getTitle());
-        existing.setDescription(updatedCase.getDescription());
+        existing.setTitle(dto.getTitle());
+        existing.setDescription(dto.getDescription());
 
         Case saved = repo.save(existing);
 
@@ -132,6 +147,17 @@ public class CaseService {
                 getCurrentUser(),
                 "Case updated"
         );
-        return saved;
+        return mapToDTO(saved);
+    }
+
+    private CaseDTO mapToDTO(Case c) {
+        return new CaseDTO(
+                c.getId(),
+                c.getTitle(),
+                c.getDescription(),
+                c.getStatus().name(),
+                c.getCreatedAt(),
+                c.getUser().getEmail()
+        );
     }
 }

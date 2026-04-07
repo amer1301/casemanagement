@@ -5,6 +5,9 @@ import com.example.casemanagement.service.CaseService;
 import org.springframework.web.bind.annotation.*;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.dto.CaseLogDTO;
+import com.example.casemanagement.dto.CaseDTO;
+import com.example.casemanagement.dto.CreateCaseDTO;
+import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.service.CaseLogService;
 
 import jakarta.validation.Valid;
@@ -23,17 +26,18 @@ public class CaseController {
     }
 
     @GetMapping
-    public List<Case> getAll() {
+    public List<CaseDTO> getAll() {
         return service.getAll();
     }
 
     @PostMapping
-    public Case create(@Valid @RequestBody Case c) {
-        return service.create(c);
+    public CaseDTO create(@Valid @RequestBody CreateCaseDTO dto) {
+
+        return service.create(dto);
     }
 
     @GetMapping("/{id}")
-    public Case getCaseById(@PathVariable Long id) {
+    public CaseDTO getCaseById(@PathVariable Long id) {
         return service.getCaseById(id);
     }
 
@@ -43,8 +47,10 @@ public class CaseController {
     }
 
     @PutMapping("/{id}")
-    public Case update(@PathVariable Long id, @RequestBody Case c) {
-        return service.update(id, c);
+    public CaseDTO update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCaseDTO dto) {
+        return service.update(id, dto);
     }
 
     @PutMapping("/{id}/status")
@@ -61,7 +67,7 @@ public class CaseController {
     }
 
     @GetMapping("/my")
-    public List<Case> getMyCase() {
+    public List<CaseDTO> getMyCase() {
         return service.getMyCases();
     }
 }
