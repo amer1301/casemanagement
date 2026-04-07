@@ -29,6 +29,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/cases/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/cases/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())

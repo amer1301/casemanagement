@@ -18,6 +18,7 @@ import java.util.List;
 public class CaseService {
     private final CaseRepository repo;
     private final UserRepository userRepository;
+    private final CaseLogService caseLogService;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext()
@@ -28,9 +29,12 @@ public class CaseService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public CaseService(CaseRepository repo, UserRepository userRepository) {
+    public CaseService(CaseRepository repo,
+                       UserRepository userRepository,
+                       CaseLogService caseLogService) {
         this.repo = repo;
         this.userRepository = userRepository;
+        this.caseLogService = caseLogService;
     }
 
     public List<Case> getAll() {
@@ -50,7 +54,15 @@ public class CaseService {
         c.setStatus(CaseStatus.SUBMITTED);
         c.setCreatedAt(LocalDateTime.now());
 
-        return repo.save(c);
+        Case saved = repo.save(c);
+
+        caseLogService.logAction(
+                saved,
+                user,
+                "Case created"
+        );
+
+        return saved;
     }
 
     public Case getCaseById(Long id) {
@@ -59,17 +71,15 @@ public class CaseService {
     }
 
     public void deleteCase(Long id) {
-        repo.deleteById(id);
-    }
+        Case c = repo.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
 
-    public Case update(Long id, Case updatedCase) {
-        Case existing = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Case not found with id " + id));
-
-        existing.setTitle(updatedCase.getTitle());
-        existing.setDescription(updatedCase.getDescription());
-
-        return repo.save(existing);
+        caseLogService.logAction(
+                c,
+                getCurrentUser(),
+                "Case deleted"
+        );
+        repo.delete(c);
     }
 
     public Case updateStatus(Long id, CaseStatus newStatus) {
@@ -95,7 +105,33 @@ public class CaseService {
         }
 
         c.setStatus(newStatus);
+        Case updated = repo.save(c);
 
-        return repo.save(c);
+        // Loggning
+        caseLogService.logAction(
+                updated,
+                currentUser,
+                "Status changed to " + newStatus + " by " + currentUser.getEmail()
+        );
+
+        return updated;
+    }
+
+    public Case update(Long id, Case updatedCase) {
+        Case existing = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found with id " + id));
+
+        existing.setTitle(updatedCase.getTitle());
+        existing.setDescription(updatedCase.getDescription());
+
+        Case saved = repo.save(existing);
+
+        // Logga
+        caseLogService.logAction(
+                saved,
+                getCurrentUser(),
+                "Case updated"
+        );
+        return saved;
     }
 }

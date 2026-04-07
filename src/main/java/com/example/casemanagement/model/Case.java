@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "cases")
@@ -29,6 +31,13 @@ public class Case {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(
+            mappedBy = "caseEntity",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<CaseLog> logs;
 
     // Tom konstruktor
     public Case() {
@@ -87,5 +96,13 @@ public class Case {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public List<CaseLog> getLogs() {
+        return logs;
+    }
+
+    public void setLogs(List<CaseLog> logs) {
+        this.logs = logs;
     }
 }

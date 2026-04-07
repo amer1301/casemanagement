@@ -4,6 +4,8 @@ import com.example.casemanagement.model.Case;
 import com.example.casemanagement.service.CaseService;
 import org.springframework.web.bind.annotation.*;
 import com.example.casemanagement.model.CaseStatus;
+import com.example.casemanagement.dto.CaseLogDTO;
+import com.example.casemanagement.service.CaseLogService;
 
 import jakarta.validation.Valid;
 
@@ -12,9 +14,12 @@ import java.util.List;
 @RequestMapping("/cases")
 public class CaseController {
     private final CaseService service;
+    private final CaseLogService caseLogService;
 
-    public CaseController(CaseService service) {
+    public CaseController(CaseService service, CaseLogService caseLogService) {
+
         this.service = service;
+        this.caseLogService = caseLogService;
     }
 
     @GetMapping
@@ -37,9 +42,22 @@ public class CaseController {
         service.deleteCase(id);
     }
 
+    @PutMapping("/{id}")
+    public Case update(@PathVariable Long id, @RequestBody Case c) {
+        return service.update(id, c);
+    }
+
     @PutMapping("/{id}/status")
     public Case updateStatus(@PathVariable Long id, @RequestParam CaseStatus status) {
         return service.updateStatus(id, status);
+    }
+
+    @GetMapping("/{id}/logs")
+    public List<CaseLogDTO> getLogs(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long userId) {
+
+        return caseLogService.getLogs(id, userId);
     }
 
     @GetMapping("/my")
