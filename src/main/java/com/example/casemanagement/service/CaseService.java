@@ -11,7 +11,7 @@ import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
 import com.example.casemanagement.exception.ForbiddenException;
-import com.example.casemanagement.model.CaseStatusTransition;
+import com.example.casemanagement.domain.CaseStatusTransition;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

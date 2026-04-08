@@ -15,6 +15,11 @@ public class CaseStatusTransition {
     );
 
     public static void validate(CaseStatus from, CaseStatus to) {
+
+        if (from == null || to == null) {
+            throw new InvalidTransitionException("Status cannot be null");
+        }
+
         if (!transitions.getOrDefault(from, List.of()).contains(to)) {
             throw new InvalidTransitionException(
                     "Invalid transition: " + from + " -> " + to
@@ -22,3 +27,4 @@ public class CaseStatusTransition {
         }
     }
 }
+
