@@ -10,6 +10,7 @@ import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.service.CaseLogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.example.casemanagement.dto.UpdateCaseStatusDTO;
 
 import jakarta.validation.Valid;
 
@@ -64,13 +65,12 @@ public class CaseController {
         return service.update(id, dto);
     }
 
-    @PutMapping("/{id}/status")
+    @PatchMapping("/{id}/status")
     public ResponseEntity<CaseDTO> updateStatus(
             @PathVariable Long id,
-            @RequestParam CaseStatus status
+            @Valid @RequestBody UpdateCaseStatusDTO dto
     ) {
-
-        return ResponseEntity.ok(service.updateStatus(id, status));
+        return ResponseEntity.ok(service.updateStatus(id, dto.getStatus()));
     }
 
     @GetMapping("/{id}/logs")

@@ -11,6 +11,7 @@ import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
 import com.example.casemanagement.exception.ForbiddenException;
+import com.example.casemanagement.model.CaseStatusTransition;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -121,15 +122,8 @@ public class CaseService {
             throw new ForbiddenException("Cannot approve your own case");
         }
 
-        // Endast från SUBMITTED
-        if (c.getStatus() != CaseStatus.SUBMITTED) {
-            throw new IllegalStateException("Case already processed");
-        }
-
-        // Endast till APPROVED eller REJECTED
-        if (newStatus != CaseStatus.APPROVED && newStatus != CaseStatus.REJECTED) {
-            throw new RuntimeException("Invalid status");
-        }
+        // Central validering
+        CaseStatusTransition.validate(c.getStatus(), newStatus);
 
         // Uppdatera
         c.setStatus(newStatus);
