@@ -1,6 +1,5 @@
 package com.example.casemanagement.controller;
 
-import com.example.casemanagement.model.Case;
 import com.example.casemanagement.service.CaseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,13 +9,12 @@ import com.example.casemanagement.dto.CaseDTO;
 import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.service.CaseLogService;
-import org.springframework.security.core.Authentication;
-import com.example.casemanagement.model.User;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cases")
 public class CaseController {
