@@ -8,5 +8,5 @@ import java.util.List;
 public interface CaseLogRepository extends JpaRepository<CaseLog, Long> {
     List<CaseLog> findByCaseEntityId(Long caseId);
 
-    List<CaseLog> findByCaseEntityIdAndUserId(Long caseId, Long userId);
+    List<CaseLog> findByCaseEntityIdAndUser_Id(Long caseId, Long userId);
 }

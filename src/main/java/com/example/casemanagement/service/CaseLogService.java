@@ -33,7 +33,7 @@ public class CaseLogService {
         List<CaseLog> logs;
 
         if (userId != null) {
-            logs = repo.findByCaseEntityIdAndUserId(caseId, userId);
+            logs = repo.findByCaseEntityIdAndUser_Id(caseId, userId);
         } else {
             logs = repo.findByCaseEntityId(caseId);
         }

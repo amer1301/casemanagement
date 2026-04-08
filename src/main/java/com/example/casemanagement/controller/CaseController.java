@@ -2,6 +2,7 @@ package com.example.casemanagement.controller;
 
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.service.CaseService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.dto.CaseLogDTO;
@@ -9,6 +10,8 @@ import com.example.casemanagement.dto.CaseDTO;
 import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.service.CaseLogService;
+import org.springframework.security.core.Authentication;
+import com.example.casemanagement.model.User;
 
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -64,8 +67,12 @@ public class CaseController {
     }
 
     @PutMapping("/{id}/status")
-    public Case updateStatus(@PathVariable Long id, @RequestParam CaseStatus status) {
-        return service.updateStatus(id, status);
+    public ResponseEntity<CaseDTO> updateStatus(
+            @PathVariable Long id,
+            @RequestParam CaseStatus status
+    ) {
+
+        return ResponseEntity.ok(service.updateStatus(id, status));
     }
 
     @GetMapping("/{id}/logs")

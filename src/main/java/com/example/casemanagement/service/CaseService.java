@@ -10,6 +10,7 @@ import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
+import com.example.casemanagement.exception.ForbiddenException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,7 +47,7 @@ public class CaseService {
     }
 
     public Page<CaseDTO> getAll(int page, int size, String sortBy) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy). descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
 
         return repo.findAll(pageable)
                 .map(this::mapToDTO);
@@ -77,7 +78,7 @@ public class CaseService {
         caseLogService.logAction(
                 saved,
                 user,
-                "Case created"
+                "CASE_CREATED"
         );
 
         return mapToDTO(saved);
@@ -97,44 +98,52 @@ public class CaseService {
         caseLogService.logAction(
                 c,
                 getCurrentUser(),
-                "Case deleted"
+                "CASE_DELETED"
         );
         repo.delete(c);
     }
 
-    public Case updateStatus(Long id, CaseStatus newStatus) {
-
-        Case c = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+    public CaseDTO updateStatus(Long id, CaseStatus newStatus) {
 
         User currentUser = getCurrentUser();
 
         // Endast ADMIN får ändra
         if (currentUser.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only Admin can update status");
+            throw new ForbiddenException("Only admin can update status");
+        }
+
+        // Hämta ärende
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+
+        // Får inte ändra sitt eget ärende
+        if (c.getUser().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Cannot approve your own case");
         }
 
         // Endast från SUBMITTED
         if (c.getStatus() != CaseStatus.SUBMITTED) {
-            throw new IllegalStateException("Invalid status transition");
+            throw new IllegalStateException("Case already processed");
         }
 
-        // ADMIN får inte godkänna sitt eget case
-        if (c.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Cannot approve your own case");
+        // Endast till APPROVED eller REJECTED
+        if (newStatus != CaseStatus.APPROVED && newStatus != CaseStatus.REJECTED) {
+            throw new RuntimeException("Invalid status");
         }
 
+        // Uppdatera
         c.setStatus(newStatus);
-        Case updated = repo.save(c);
+
+        Case saved = repo.save(c);
 
         // Loggning
         caseLogService.logAction(
-                updated,
+                saved,
                 currentUser,
-                "Status changed to " + newStatus + " by " + currentUser.getEmail()
+                "STATUS_CHANGED " + newStatus + " by " + currentUser.getEmail()
         );
 
-        return updated;
+        return mapToDTO(saved);
     }
 
     public CaseDTO update(Long id, UpdateCaseDTO dto) {
@@ -150,7 +159,7 @@ public class CaseService {
         caseLogService.logAction(
                 saved,
                 getCurrentUser(),
-                "Case updated"
+                "CASE_UPDATED"
         );
         return mapToDTO(saved);
     }

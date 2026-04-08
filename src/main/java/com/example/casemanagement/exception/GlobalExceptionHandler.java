@@ -52,4 +52,15 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<?> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity.status(403).body(
+                Map.of(
+                        "message", ex.getMessage(),
+                        "status", 403,
+                        "timestamp", LocalDateTime.now()
+                )
+        );
+    }
 }
