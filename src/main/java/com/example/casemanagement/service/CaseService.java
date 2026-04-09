@@ -30,7 +30,7 @@ public class CaseService {
     private final UserRepository userRepository;
     private final CaseLogService caseLogService;
 
-    private User getCurrentUser() {
+    protected User getCurrentUser() {
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
