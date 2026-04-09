@@ -37,7 +37,7 @@ public class Case {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<CaseLog> logs;
+    private List<CaseLog> logs = new java.util.ArrayList<>();
 
     // Tom konstruktor
     public Case() {
@@ -104,5 +104,9 @@ public class Case {
 
     public void setLogs(List<CaseLog> logs) {
         this.logs = logs;
+    }
+    public void addLog(CaseLog log) {
+        logs.add(log);
+        log.setCaseEntity(this);
     }
 }

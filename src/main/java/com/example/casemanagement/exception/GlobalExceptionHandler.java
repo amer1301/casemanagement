@@ -63,4 +63,15 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler(InvalidTransitionException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidTransition(InvalidTransitionException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", 400);
+        response.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+    }
 }
