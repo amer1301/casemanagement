@@ -39,10 +39,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/cases/**").authenticated()
-                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/cases/**").authenticated()
+                        .requestMatchers("/cases/**").authenticated()
 
-                        .requestMatchers("/cases/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

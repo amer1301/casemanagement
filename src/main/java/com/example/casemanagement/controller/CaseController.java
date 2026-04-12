@@ -39,7 +39,7 @@ public class CaseController {
             return service.getByStatus(status);
         }
 
-        return service.getAll(page, size, sortBy);
+        return service.getAll(page, size, sortBy).getContent();
     }
 
     @PostMapping

@@ -50,8 +50,12 @@ public class CaseService {
     public Page<CaseDTO> getAll(int page, int size, String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
 
-        return repo.findAll(pageable)
+        Page<CaseDTO> result = repo.findAll(pageable)
                 .map(this::mapToDTO);
+
+        System.out.println("TOTAL CASES: " + result.getTotalElements());
+
+        return result;
     }
 
     public List<CaseDTO> getMyCases() {
@@ -86,7 +90,7 @@ public class CaseService {
     }
 
     public CaseDTO getCaseById(Long id) {
-        Case c = repo.findById(id)
+        Case c = repo.findByIdWithUser(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case med id " + id + " hittades inte"));
 
         return mapToDTO(c);
@@ -107,6 +111,7 @@ public class CaseService {
     public CaseDTO updateStatus(Long id, CaseStatus newStatus) {
 
         User currentUser = getCurrentUser();
+        System.out.println("CURRENT USER ROLE: " + currentUser.getRole());
 
         // Endast ADMIN får ändra
         if (currentUser.getRole() != Role.ADMIN) {
@@ -175,4 +180,5 @@ public class CaseService {
                 .map(this::mapToDTO)
                 .toList();
     }
+
 }
