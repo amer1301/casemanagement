@@ -19,8 +19,9 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public User register(String email, String password) {
+    public User register(String name, String email, String password) {
         User user = new User(
+                name,
                 email,
                 passwordEncoder.encode(password),
                 Role.USER

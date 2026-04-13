@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import jakarta.validation.constraints.NotBlank;
 import java.util.Collections;
 import java.util.Collection;
 
@@ -15,6 +15,9 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotBlank
+    private String name;
 
     @Column(unique = true)
     private String email;
@@ -27,7 +30,8 @@ public class User implements UserDetails {
 
     public User() {}
 
-    public User(String email, String password, Role role) {
+    public User(String name, String email, String password, Role role) {
+        this.name = name;
         this.email = email;
         this.password = password;
         this.role = role;
@@ -91,5 +95,13 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

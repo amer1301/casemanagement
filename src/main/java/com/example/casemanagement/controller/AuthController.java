@@ -23,7 +23,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public User register(@RequestBody LoginRequest request) {
-        return authService.register(request.getEmail(), request.getPassword());
+        return authService.register(
+                request.getName(),
+                request.getEmail(),
+                request.getPassword()
+        );
     }
 
     @PostMapping("/login")
@@ -36,7 +40,9 @@ public class AuthController {
 
         return Map.of(
                 "token", token,
-                "role", user.getRole().name()
+                "role", user.getRole().name(),
+                "email", user.getEmail(),
+                "name", user.getName()
         );
     }
 }
