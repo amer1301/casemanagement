@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+
+                        // 🔓 Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(
@@ -39,9 +41,14 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
+                        // ROLE-BASERAD ACCESS
+                        .requestMatchers("/manager/**").hasRole("MANAGER")
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MANAGER")
+
+                        // Alla inloggade användare
                         .requestMatchers("/cases/**").authenticated()
 
-
+                        // Allt annat kräver auth
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())
@@ -60,7 +67,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(java.util.List.of("http://localhost:5173")); // FIX
+        config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
         config.setAllowedMethods(java.util.List.of("*"));
         config.setAllowedHeaders(java.util.List.of("*"));
         config.setAllowCredentials(true);

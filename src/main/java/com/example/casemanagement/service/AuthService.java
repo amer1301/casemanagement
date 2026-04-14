@@ -39,4 +39,10 @@ public class AuthService {
         }
         return jwtService.generateToken(user.getEmail());
     }
+
+    public void validateManagerCreation() {
+        if (userRepository.existsByRole(Role.MANAGER)) {
+            throw new RuntimeException("Manager already exists");
+        }
+    }
 }

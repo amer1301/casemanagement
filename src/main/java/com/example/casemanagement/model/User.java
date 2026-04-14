@@ -69,12 +69,17 @@ public class User implements UserDetails {
     }
 
     public void setRole(Role role) {
+        if (this.role == Role.MANAGER) {
+            throw new RuntimeException("Manager role cannot be changed");
+        }
         this.role = role;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return Collections.singletonList(
+                (GrantedAuthority) () -> "ROLE_" + role.name()
+        );
     }
 
     @Override
