@@ -1,6 +1,8 @@
-package com.example.casemanagement.service;
+package com.example.casemanagement.config;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
@@ -10,35 +12,32 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private final String SECRET = "mysecretkeymysecretkeymysecretkey12345";
+    private final String SECRET = "mysecretkeymysecretkeymysecretkeymysecretkey";
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    // Skapa token
-    public String generateToken(String email) {
+    public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1h
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // Hämta email
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }
 
-    // Kolla expiration
     private boolean isTokenExpired(String token) {
         return extractAllClaims(token)
                 .getExpiration()
                 .before(new Date());
     }
 
-    // Läs allt från token
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignKey())
@@ -46,6 +45,7 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
     public boolean isTokenValid(String token) {
         try {
             return !isTokenExpired(token);

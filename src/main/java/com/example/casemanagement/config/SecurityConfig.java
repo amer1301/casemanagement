@@ -24,12 +24,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // CORS
                 .cors(cors -> {})
+
+                // CSRF av (API)
                 .csrf(csrf -> csrf.disable())
+
+                // H2-console fix
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+
+                // Stateless JWT
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
+                // Authorization regler
                 .authorizeHttpRequests(auth -> auth
 
                         // 🔓 Public endpoints
@@ -41,28 +50,36 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // ROLE-BASERAD ACCESS
+                        // Manager endpoints
                         .requestMatchers("/manager/**").hasRole("MANAGER")
+
+                        // Admin + Manager
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MANAGER")
 
-                        // Alla inloggade användare
+                        // Alla inloggade
                         .requestMatchers("/cases/**").authenticated()
 
-                        // Allt annat kräver auth
+                        // Default
                         .anyRequest().authenticated()
                 )
+
+                // Disable default auth
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(form -> form.disable())
+
+                // JWT filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // CORS config
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -74,6 +91,7 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+
         return source;
     }
 }

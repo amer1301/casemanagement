@@ -12,16 +12,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initManager(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initManager(UserRepository userRepository,
+                                  PasswordEncoder passwordEncoder) {
         return args -> {
+
+            // Säkerställ att endast en manager finns
             if (!userRepository.existsByRole(Role.MANAGER)) {
 
-                User manager = new User();
-                manager.setEmail("manager@system.local");
-                manager.setPassword(passwordEncoder.encode("manager123"));
-                manager.setRole(Role.MANAGER);
+                User manager = new User(
+                        "System Manager",
+                        "manager@system.local",
+                        passwordEncoder.encode("manager123"),
+                        Role.MANAGER
+                );
 
                 userRepository.save(manager);
+
+                System.out.println("Manager created at startup");
             }
         };
     }
