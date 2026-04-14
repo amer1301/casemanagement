@@ -25,6 +25,11 @@ public class CaseLog {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @PrePersist
+    public void onCreate() {
+        this.timestamp = LocalDateTime.now();
+    }
+
     // Get & Set
 
     public Long getId() {

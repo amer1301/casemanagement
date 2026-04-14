@@ -85,4 +85,19 @@ public class CaseController {
     public List<CaseDTO> getMyCase() {
         return service.getMyCases();
     }
+
+    @PostMapping("/request-admin")
+    public CaseDTO requestAdmin() {
+        return service.requestAdmin();
+    }
+
+    @PostMapping("/{id}/approve-role")
+    public CaseDTO approveRole(@PathVariable Long id) {
+        return service.approveRole(id);
+    }
+
+    @PostMapping("/{id}/reject-role")
+    public CaseDTO rejectRole(@PathVariable Long id) {
+        return service.rejectRole(id);
+    }
 }

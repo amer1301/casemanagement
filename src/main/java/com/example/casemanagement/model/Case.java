@@ -3,7 +3,7 @@ package com.example.casemanagement.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,7 +26,14 @@ public class Case {
     @Enumerated(EnumType.STRING)
     private CaseStatus status;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    private String type;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -108,5 +115,21 @@ public class Case {
     public void addLog(CaseLog log) {
         logs.add(log);
         log.setCaseEntity(this);
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 }

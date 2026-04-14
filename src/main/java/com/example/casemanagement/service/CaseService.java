@@ -6,10 +6,11 @@ import com.example.casemanagement.model.Case;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.model.User;
 import com.example.casemanagement.model.Role;
+import com.example.casemanagement.repository.UserRepository;
+import com.example.casemanagement.repository.CaseRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
-import com.example.casemanagement.repository.CaseRepository;
-import com.example.casemanagement.repository.UserRepository;
 import com.example.casemanagement.exception.ForbiddenException;
 import com.example.casemanagement.domain.CaseStatusTransition;
 
@@ -19,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -111,26 +111,45 @@ public class CaseService {
     public CaseDTO updateStatus(Long id, CaseStatus newStatus) {
 
         User currentUser = getCurrentUser();
-        System.out.println("CURRENT USER ROLE: " + currentUser.getRole());
 
-        // Endast ADMIN får ändra
         if (currentUser.getRole() != Role.ADMIN) {
             throw new ForbiddenException("Only admin can update status");
         }
 
-        // Hämta ärende
         Case c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
 
-        // Får inte ändra sitt eget ärende
         if (c.getUser().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("Cannot approve your own case");
         }
 
-        // Central validering
         CaseStatusTransition.validate(c.getStatus(), newStatus);
 
-        // Uppdatera
+        if ("ROLE_REQUEST".equals(c.getType())) {
+
+            User targetUser = c.getUser();
+
+            if (newStatus == CaseStatus.APPROVED) {
+                targetUser.setRole(Role.ADMIN);
+                userRepository.save(targetUser);
+
+                caseLogService.logAction(
+                        c,
+                        currentUser,
+                        "USER_PROMOTED_TO_ADMIN: " + targetUser.getEmail()
+                );
+            }
+
+            if (newStatus == CaseStatus.REJECTED) {
+                caseLogService.logAction(
+                        c,
+                        currentUser,
+                        "ADMIN_REQUEST_REJECTED: " + targetUser.getEmail()
+                );
+            }
+        }
+
+        // Uppdatera status
         c.setStatus(newStatus);
 
         Case saved = repo.save(c);
@@ -139,7 +158,7 @@ public class CaseService {
         caseLogService.logAction(
                 saved,
                 currentUser,
-                "STATUS_CHANGED " + newStatus + " by " + currentUser.getEmail()
+                "STATUS_CHANGED " + newStatus
         );
 
         return mapToDTO(saved);
@@ -170,7 +189,7 @@ public class CaseService {
                 c.getDescription(),
                 c.getStatus().name(),
                 c.getCreatedAt(),
-                c.getUser().getEmail()
+                c.getUser() != null ? c.getUser().getEmail() : "Okänd"
         );
     }
 
@@ -181,4 +200,57 @@ public class CaseService {
                 .toList();
     }
 
+    public CaseDTO requestAdmin() {
+        User user = getCurrentUser();
+
+        Case newCase = new Case();
+
+        newCase.setTitle("Admin request");
+        newCase.setDescription("User " + user.getEmail() + " wants admin access");
+
+        newCase.setStatus(CaseStatus.SUBMITTED);
+        newCase.setUser(user);
+
+        newCase.setType("ROLE_REQUEST");
+        newCase.setCreatedAt(LocalDateTime.now());
+
+        Case saved = repo.save(newCase);
+
+        caseLogService.logAction(
+                saved,
+                user,
+                "ROLE_REQUEST_CREATED"
+        );
+
+        return mapToDTO(saved);
+    }
+
+    public CaseDTO approveRole(Long id) {
+
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Case not found"));
+
+        if (!"ROLE_REQUEST".equals(c.getType())) {
+            throw new RuntimeException("Fel typ");
+        }
+
+        User user = c.getCreatedBy();
+
+        user.setRole(Role.ADMIN);
+        userRepository.save(user);
+
+        c.setStatus(CaseStatus.APPROVED);
+
+        return mapToDTO(repo.save(c));
+    }
+
+    public CaseDTO rejectRole(Long id) {
+
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Case not found"));
+
+        c.setStatus(CaseStatus.REJECTED);
+
+        return mapToDTO(repo.save(c));
+    }
 }
