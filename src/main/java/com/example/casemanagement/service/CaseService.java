@@ -1,5 +1,6 @@
 package com.example.casemanagement.service;
 
+import com.example.casemanagement.dto.AdminStatsDTO;
 import com.example.casemanagement.dto.CaseDTO;
 import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.model.Case;
@@ -303,5 +304,22 @@ public class CaseService {
         repo.save(c);
 
         return mapToDTO(c);
+    }
+
+    public List<AdminStatsDTO> getAdminStats() {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+
+        return admins.stream().map(admin -> {
+            long total = repo.countByAssignedTo(admin);
+            long handled = repo.countByAssignedToAndStatusNot(admin, CaseStatus.SUBMITTED);
+            long pending = repo.countByAssignedToAndStatus(admin, CaseStatus.SUBMITTED);
+
+            return new AdminStatsDTO(
+                    admin.getName(),
+                    total,
+                    handled,
+                    pending
+            );
+        }).toList();
     }
 }

@@ -8,6 +8,7 @@ import com.example.casemanagement.dto.CaseLogDTO;
 import com.example.casemanagement.dto.CaseDTO;
 import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
+import com.example.casemanagement.dto.AdminStatsDTO;
 import com.example.casemanagement.service.CaseLogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.example.casemanagement.dto.UpdateCaseStatusDTO;
@@ -111,5 +112,10 @@ public class CaseController {
     @PatchMapping("/{id}/assign")
     public CaseDTO assign(@PathVariable Long id) {
         return service.assignToCurrentUser(id);
+    }
+
+    @GetMapping("/dashboard/admins")
+    public List<AdminStatsDTO> getAdminStats() {
+        return service.getAdminStats();
     }
 }
