@@ -73,7 +73,9 @@ public class CaseController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateCaseStatusDTO dto
     ) {
-        return ResponseEntity.ok(service.updateStatus(id, dto.getStatus()));
+        return ResponseEntity.ok(
+                service.updateStatus(id, dto.getStatus(), dto.getReason())
+        );
     }
 
     @GetMapping("/{id}/logs")

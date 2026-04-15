@@ -35,6 +35,8 @@ public class Case {
 
     private String type;
 
+    private String rejectionReason;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -143,5 +145,13 @@ public class Case {
 
     public void setAssignedTo(User assignedTo) {
         this.assignedTo = assignedTo;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 }
