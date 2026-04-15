@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class CaseService {
@@ -183,7 +185,8 @@ public class CaseService {
     }
 
     private CaseDTO mapToDTO(Case c) {
-        return new CaseDTO(
+
+        CaseDTO dto = new CaseDTO(
                 c.getId(),
                 c.getTitle(),
                 c.getDescription(),
@@ -191,6 +194,12 @@ public class CaseService {
                 c.getCreatedAt(),
                 c.getUser() != null ? c.getUser().getEmail() : "Okänd"
         );
+
+        if (c.getAssignedTo() != null) {
+            dto.setAssignedToName(c.getAssignedTo().getName());
+        }
+
+        return dto;
     }
 
     public List<CaseDTO> getByStatus(CaseStatus status) {
@@ -252,5 +261,47 @@ public class CaseService {
         c.setStatus(CaseStatus.REJECTED);
 
         return mapToDTO(repo.save(c));
+    }
+
+    public Map<String, Object> getDashboardStats() {
+
+        User currentUser = getCurrentUser();
+
+        long total;
+        long pending;
+        long handled;
+
+        if (currentUser.getRole() == Role.MANAGER) {
+            // Manager ser ALLA
+            total = repo.count();
+            pending = repo.countByAssignedToIsNull();
+            handled = repo.countByAssignedToIsNotNull();
+        } else {
+            // Admin ser sina egna
+            total = repo.countByAssignedTo(currentUser);
+            pending = repo.countByAssignedToAndStatus(currentUser, CaseStatus.SUBMITTED);
+            handled = repo.countByAssignedToAndStatusNot(currentUser, CaseStatus.SUBMITTED);
+        }
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("total", total);
+        stats.put("pending", pending);
+        stats.put("handled", handled);
+
+        return stats;
+    }
+
+    public CaseDTO assignToCurrentUser(Long caseId) {
+
+        Case c = repo.findById(caseId)
+                .orElseThrow(() -> new RuntimeException("Case not found"));
+
+        User currentUser = getCurrentUser(); // du har redan denna i service
+
+        c.setAssignedTo(currentUser);
+
+        repo.save(c);
+
+        return mapToDTO(c);
     }
 }

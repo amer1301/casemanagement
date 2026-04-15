@@ -39,6 +39,10 @@ public class Case {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
+
     @OneToMany(
             mappedBy = "caseEntity",
             cascade = CascadeType.ALL,
@@ -131,5 +135,13 @@ public class Case {
 
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public User getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(User assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }

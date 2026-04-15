@@ -15,6 +15,8 @@ import com.example.casemanagement.dto.UpdateCaseStatusDTO;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Map;
+
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cases")
@@ -99,5 +101,15 @@ public class CaseController {
     @PostMapping("/{id}/reject-role")
     public CaseDTO rejectRole(@PathVariable Long id) {
         return service.rejectRole(id);
+    }
+
+    @GetMapping("/dashboard")
+    public Map<String, Object> dashboard() {
+        return service.getDashboardStats();
+    }
+
+    @PatchMapping("/{id}/assign")
+    public CaseDTO assign(@PathVariable Long id) {
+        return service.assignToCurrentUser(id);
     }
 }

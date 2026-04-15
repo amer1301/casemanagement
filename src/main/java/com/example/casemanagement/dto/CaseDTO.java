@@ -10,6 +10,7 @@ public class CaseDTO {
     private String status;
     private LocalDateTime createdAt;
     private String userEmail;
+    private String assignedToName;
 
     public CaseDTO(Long id, String title, String description, String status, LocalDateTime createdAt, String userEmail) {
         this.id = id;
@@ -43,5 +44,13 @@ public class CaseDTO {
 
     public String getUserEmail() {
         return userEmail;
+    }
+
+    public String getAssignedToName() {
+        return assignedToName;
+    }
+
+    public void setAssignedToName(String assignedToName) {
+        this.assignedToName = assignedToName;
     }
 }
