@@ -120,4 +120,24 @@ public class CaseController {
     public List<AdminStatsDTO> getAdminStats() {
         return service.getAdminStats();
     }
+
+    @GetMapping("/unassigned")
+    public List<CaseDTO> getUnassigned() {
+        return service.getUnassignedCases();
+    }
+
+    @GetMapping("/assigned")
+    public List<CaseDTO> getAssignedToMe() {
+        return service.getMyAssignedCases();
+    }
+
+    @PostMapping("/{id}/appeal")
+    public ResponseEntity<CaseDTO> appealCase(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body
+    ) {
+        return ResponseEntity.ok(
+                service.appealCase(id, body.get("reason"))
+        );
+    }
 }

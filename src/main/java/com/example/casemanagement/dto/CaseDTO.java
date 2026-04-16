@@ -12,6 +12,8 @@ public class CaseDTO {
     private String userEmail;
     private String assignedToName;
     private String rejectionReason;
+    private boolean appealed;
+    private String appealReason;
 
     public CaseDTO(Long id,
                    String title,
@@ -28,6 +30,7 @@ public class CaseDTO {
         this.userEmail = userEmail;
     }
 
+    // GETTERS
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
@@ -37,11 +40,23 @@ public class CaseDTO {
     public String getAssignedToName() { return assignedToName; }
     public String getRejectionReason() { return rejectionReason; }
 
+    public boolean isAppealed() { return appealed; }
+    public String getAppealReason() { return appealReason; }
+
+    // SETTERS
     public void setAssignedToName(String assignedToName) {
         this.assignedToName = assignedToName;
     }
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public void setAppealed(boolean appealed) {
+        this.appealed = appealed;
+    }
+
+    public void setAppealReason(String appealReason) {
+        this.appealReason = appealReason;
     }
 }

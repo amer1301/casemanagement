@@ -27,13 +27,16 @@ public class CaseService {
     private final CaseRepository repo;
     private final UserRepository userRepository;
     private final CaseLogService caseLogService;
+    private final NotificationService notificationService;
 
     public CaseService(CaseRepository repo,
                        UserRepository userRepository,
-                       CaseLogService caseLogService) {
+                       CaseLogService caseLogService,
+                       NotificationService notificationService) {
         this.repo = repo;
         this.userRepository = userRepository;
         this.caseLogService = caseLogService;
+        this.notificationService = notificationService;
     }
 
     protected User getCurrentUser() {
@@ -60,6 +63,7 @@ public class CaseService {
     }
 
     public CaseDTO create(CreateCaseDTO dto) {
+
         User user = getCurrentUser();
 
         Case c = new Case();
@@ -72,6 +76,17 @@ public class CaseService {
         Case saved = repo.save(c);
 
         caseLogService.logAction(saved, user, "CASE_CREATED");
+
+        // NOTIS TILL ALLA ADMINS
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+
+        for (User admin : admins) {
+            notificationService.createNotification(
+                    admin,
+                    "Nytt ärende har skapats: " + saved.getTitle(),
+                    saved.getId()
+            );
+        }
 
         return mapToDTO(saved);
     }
@@ -102,16 +117,29 @@ public class CaseService {
         Case c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
 
+        // Admin får inte ändra sitt eget ärende
         if (c.getUser().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("Cannot update your own case");
         }
 
+        // Tillåt bara ändring om ärendet är öppet
+        if (c.getStatus() != CaseStatus.SUBMITTED) {
+            throw new ForbiddenException("Ärendet är redan avslutat");
+        }
+
+        // Säkerställ att admin har tagit ärendet
+        if (c.getAssignedTo() == null) {
+            throw new ForbiddenException("Du måste ta ärendet innan du ändrar status");
+        }
+
         CaseStatusTransition.validate(c.getStatus(), newStatus);
 
+        // Spara anledning vid avslag
         if (newStatus == CaseStatus.REJECTED) {
             c.setRejectionReason(reason);
         }
 
+        // Hantera ROLE_REQUEST
         if ("ROLE_REQUEST".equals(c.getType())) {
 
             User targetUser = c.getUser();
@@ -136,15 +164,37 @@ public class CaseService {
             }
         }
 
+        // Uppdatera status
         c.setStatus(newStatus);
 
         Case saved = repo.save(c);
 
+        // Logg
         caseLogService.logAction(
                 saved,
                 currentUser,
                 "STATUS_CHANGED " + newStatus
         );
+
+        // NOTIS TILL USER
+        if (!currentUser.getId().equals(saved.getUser().getId())) {
+
+            String message;
+
+            if (newStatus == CaseStatus.APPROVED) {
+                message = "Ditt ärende '" + saved.getTitle() + "' har blivit godkänt";
+            } else if (newStatus == CaseStatus.REJECTED) {
+                message = "Ditt ärende '" + saved.getTitle() + "' har blivit avslaget";
+            } else {
+                message = "Ditt ärende '" + saved.getTitle() + "' uppdaterades till " + newStatus;
+            }
+
+            notificationService.createNotification(
+                    saved.getUser(),
+                    message,
+                    saved.getId()
+            );
+        }
 
         return mapToDTO(saved);
     }
@@ -181,6 +231,9 @@ public class CaseService {
         if (c.getRejectionReason() != null) {
             dto.setRejectionReason(c.getRejectionReason());
         }
+
+        dto.setAppealed(c.isAppealed());
+        dto.setAppealReason(c.getAppealReason());
 
         return dto;
     }
@@ -272,11 +325,55 @@ public class CaseService {
 
         User currentUser = getCurrentUser();
 
+        User previousAdmin = c.getAssignedTo();
+
+        // Om samma admin redan har ärendet → gör inget
+        if (previousAdmin != null && previousAdmin.getId().equals(currentUser.getId())) {
+            return mapToDTO(c);
+        }
+
+        // Sätt ny handläggare
         c.setAssignedTo(currentUser);
 
-        repo.save(c);
+        Case saved = repo.save(c);
 
-        return mapToDTO(c);
+        // LOGG
+        if (previousAdmin == null) {
+            caseLogService.logAction(
+                    saved,
+                    currentUser,
+                    "CASE_ASSIGNED_TO " + currentUser.getEmail()
+            );
+        } else {
+            caseLogService.logAction(
+                    saved,
+                    currentUser,
+                    "CASE_REASSIGNED_FROM " + previousAdmin.getEmail() +
+                            " TO " + currentUser.getEmail()
+            );
+        }
+
+        // NOTIS TILL USER
+        if (!currentUser.getId().equals(saved.getUser().getId())) {
+            notificationService.createNotification(
+                    saved.getUser(),
+                    "Ditt ärende '" + saved.getTitle() + "' har blivit tilldelat en handläggare",
+                    saved.getId()
+            );
+        }
+
+        // NOTIS TILL TIDIGARE ADMIN (vid takeover)
+        if (previousAdmin != null &&
+                !previousAdmin.getId().equals(currentUser.getId())) {
+
+            notificationService.createNotification(
+                    previousAdmin,
+                    "Ett ärende du hanterade ('" + saved.getTitle() + "') har tagits över av en annan admin",
+                    saved.getId()
+            );
+        }
+
+        return mapToDTO(saved);
     }
 
     public List<AdminStatsDTO> getAdminStats() {
@@ -297,5 +394,59 @@ public class CaseService {
             );
 
         }).toList();
+    }
+
+    public List<CaseDTO> getUnassignedCases() {
+        return repo.findByAssignedToIsNull()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    public List<CaseDTO> getMyAssignedCases() {
+        User currentUser = getCurrentUser();
+
+        return repo.findByAssignedTo(currentUser)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    public CaseDTO appealCase(Long id, String reason) {
+
+        User currentUser = getCurrentUser();
+
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+
+        // Endast ägaren får överklaga
+        if (!c.getUser().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Du kan bara överklaga dina egna ärenden");
+        }
+
+        // Måste vara avslaget
+        if (c.getStatus() != CaseStatus.REJECTED) {
+            throw new ForbiddenException("Endast avslagna ärenden kan överklagas");
+        }
+
+        // Redan överklagat
+        if (c.isAppealed()) {
+            throw new ForbiddenException("Ärendet är redan överklagat");
+        }
+
+        // ✔ Spara överklagan
+        c.setAppealed(true);
+        c.setAppealReason(reason);
+        c.setStatus(CaseStatus.SUBMITTED); // öppna igen
+
+        Case saved = repo.save(c);
+
+        caseLogService.logAction(
+                saved,
+                currentUser,
+                "CASE_APPEALED"
+        );
+
+        return mapToDTO(saved);
     }
 }

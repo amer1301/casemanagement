@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "cases")
@@ -45,12 +46,25 @@ public class Case {
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
 
+    @Column(nullable = true)
+    private String appealReason;
+
+    @Column(nullable = false)
+    private boolean appealed = false;
+
     @OneToMany(
             mappedBy = "caseEntity",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<CaseLog> logs = new java.util.ArrayList<>();
+    private List<CaseNote> notes = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "caseEntity",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<CaseLog> logs = new ArrayList<>();
 
     // Tom konstruktor
     public Case() {
@@ -153,5 +167,29 @@ public class Case {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getAppealReason() {
+        return appealReason;
+    }
+
+    public void setAppealReason(String appealReason) {
+        this.appealReason = appealReason;
+    }
+
+    public boolean isAppealed() {
+        return appealed;
+    }
+
+    public void setAppealed(boolean appealed) {
+        this.appealed = appealed;
+    }
+
+    public List<CaseNote> getNotes() {
+        return notes;
+    }
+
+    public void setNotes(List<CaseNote> notes) {
+        this.notes = notes;
     }
 }

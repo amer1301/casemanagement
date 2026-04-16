@@ -15,6 +15,9 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
 
     List<Case> findByUser(User user);
     List<Case> findByStatus(CaseStatus status);
+    List<Case> findByAssignedToIsNull();
+
+    List<Case> findByAssignedTo(User user);
 
     long countByAssignedToIsNull();
     long countByAssignedToIsNotNull();
