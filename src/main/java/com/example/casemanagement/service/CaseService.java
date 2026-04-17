@@ -151,7 +151,7 @@ public class CaseService {
                 caseLogService.logAction(
                         c,
                         currentUser,
-                        "USER_PROMOTED_TO_ADMIN: " + targetUser.getEmail()
+                        "USER_PROMOTED_TO_ADMIN"
                 );
             }
 
@@ -159,7 +159,7 @@ public class CaseService {
                 caseLogService.logAction(
                         c,
                         currentUser,
-                        "ADMIN_REQUEST_REJECTED: " + targetUser.getEmail()
+                        "ADMIN_REQUEST_REJECTED"
                 );
             }
         }
@@ -173,7 +173,7 @@ public class CaseService {
         caseLogService.logAction(
                 saved,
                 currentUser,
-                "STATUS_CHANGED " + newStatus
+                "STATUS_CHANGED_" + newStatus
         );
 
         // NOTIS TILL USER
@@ -342,14 +342,13 @@ public class CaseService {
             caseLogService.logAction(
                     saved,
                     currentUser,
-                    "CASE_ASSIGNED_TO " + currentUser.getEmail()
+                    "CASE_ASSIGNED_TO" + currentUser.getEmail()
             );
         } else {
             caseLogService.logAction(
                     saved,
                     currentUser,
-                    "CASE_REASSIGNED_FROM " + previousAdmin.getEmail() +
-                            " TO " + currentUser.getEmail()
+                    "CASE_REASSIGNED"
             );
         }
 
@@ -441,11 +440,23 @@ public class CaseService {
 
         Case saved = repo.save(c);
 
+// LOGG
         caseLogService.logAction(
                 saved,
                 currentUser,
                 "CASE_APPEALED"
         );
+
+// NOTIS TILL ALLA ADMINS
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+
+        for (User admin : admins) {
+            notificationService.createNotification(
+                    admin,
+                    "Ett ärende har överklagats: " + saved.getTitle(),
+                    saved.getId()
+            );
+        }
 
         return mapToDTO(saved);
     }
