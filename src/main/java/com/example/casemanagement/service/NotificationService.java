@@ -32,14 +32,22 @@ public class NotificationService {
     }
 
     public List<Notification> getMyNotifications(User user) {
-        return repo.findByUserOrderByCreatedAtDesc(user);
+        return repo.findByUserAndDeletedFalseOrderByCreatedAtDesc(user);
+    }
+
+    public void delete(Long id) {
+        Notification n = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        n.setDeleted(true);
+        repo.save(n);
     }
 
     public void markAllAsReadForCurrentUser() {
         User user = getCurrentUser();
 
         List<Notification> notifications =
-                repo.findByUser(user);
+                repo.findByUserAndDeletedFalse(user);
 
         for (Notification n : notifications) {
             n.setRead(true);
@@ -50,7 +58,7 @@ public class NotificationService {
 
     public int getUnreadCount() {
         User user = getCurrentUser();
-        return repo.countByUserAndIsReadFalse(user);
+        return repo.countByUserAndIsReadFalseAndDeletedFalse(user);
     }
 
     private User getCurrentUser() {

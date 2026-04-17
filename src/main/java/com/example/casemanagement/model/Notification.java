@@ -21,7 +21,19 @@ public class Notification {
     @ManyToOne
     private User user;
 
+    @Column(name = "is_deleted")
+    private boolean deleted = false;
+
     // Get & Set
+
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
 
     public Long getId() {
         return id;

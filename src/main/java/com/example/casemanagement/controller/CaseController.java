@@ -79,11 +79,8 @@ public class CaseController {
     }
 
     @GetMapping("/{id}/logs")
-    public List<CaseLogDTO> getLogs(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long userId) {
-
-        return caseLogService.getLogs(id, userId);
+    public List<CaseLogDTO> getLogs(@PathVariable Long id) {
+        return caseLogService.getLogs(id);
     }
 
     @GetMapping("/my")

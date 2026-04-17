@@ -28,6 +28,11 @@ public class NotificationController {
         return userRepository.findByEmail(email).orElseThrow();
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteNotification(@PathVariable Long id) {
+        service.delete(id);
+    }
+
     @GetMapping
     public List<?> getMyNotifications() {
         return service.getMyNotifications(getCurrentUser());

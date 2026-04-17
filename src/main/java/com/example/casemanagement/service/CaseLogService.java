@@ -29,23 +29,20 @@ public class CaseLogService {
         repo.save(log);
     }
 
-    public List<CaseLogDTO> getLogs(Long caseId, Long userId) {
-        List<CaseLog> logs;
-
-        if (userId != null) {
-            logs = repo.findByCaseEntityIdAndUser_Id(caseId, userId);
-        } else {
-            logs = repo.findByCaseEntityId(caseId);
-        }
-
-        return logs.stream()
-                .map(log -> new CaseLogDTO(
-                        log.getId(),
-                        log.getAction(),
-                        log.getTimestamp(),
-                        log.getCaseEntity().getId(),
-                        log.getUser().getEmail()
-                ))
+    public List<CaseLogDTO> getLogs(Long caseId) {
+        return repo.findByCaseEntityId(caseId)
+                .stream()
+                .map(this::mapToDTO)
                 .toList();
+    }
+
+    private CaseLogDTO mapToDTO(CaseLog log) {
+        return new CaseLogDTO(
+                log.getId(),
+                log.getAction(),
+                log.getTimestamp(),
+                log.getCaseEntity().getId(),
+                log.getUser() != null ? log.getUser().getEmail() : null
+        );
     }
 }
