@@ -14,6 +14,7 @@ public class CaseDTO {
     private String rejectionReason;
     private boolean appealed;
     private String appealReason;
+    private String type;
 
     public CaseDTO(Long id,
                    String title,
@@ -31,17 +32,49 @@ public class CaseDTO {
     }
 
     // GETTERS
-    public Long getId() { return id; }
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public String getStatus() { return status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public String getUserEmail() { return userEmail; }
-    public String getAssignedToName() { return assignedToName; }
-    public String getRejectionReason() { return rejectionReason; }
+    public Long getId() {
+        return id;
+    }
 
-    public boolean isAppealed() { return appealed; }
-    public String getAppealReason() { return appealReason; }
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public String getAssignedToName() {
+        return assignedToName;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public boolean isAppealed() {
+        return appealed;
+    }
+
+    public String getAppealReason() {
+        return appealReason;
+    }
+
+    public String getType() {
+        return type;
+    }
 
     // SETTERS
     public void setAssignedToName(String assignedToName) {
@@ -58,5 +91,9 @@ public class CaseDTO {
 
     public void setAppealReason(String appealReason) {
         this.appealReason = appealReason;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

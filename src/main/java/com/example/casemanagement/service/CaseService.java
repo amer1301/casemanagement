@@ -234,11 +234,18 @@ public class CaseService {
 
         dto.setAppealed(c.isAppealed());
         dto.setAppealReason(c.getAppealReason());
+        dto.setType(c.getType());
 
         return dto;
     }
 
     public List<CaseDTO> getByStatus(CaseStatus status) {
+        User user = getCurrentUser();
+
+        if (user.getRole() != Role.MANAGER) {
+            return List.of();
+        }
+
         return repo.findByStatus(status)
                 .stream()
                 .map(this::mapToDTO)
@@ -248,9 +255,19 @@ public class CaseService {
     public CaseDTO requestAdmin() {
         User user = getCurrentUser();
 
+        boolean alreadyExists = repo.existsByUserAndTypeAndStatus(
+                user,
+                "ROLE_REQUEST",
+                CaseStatus.SUBMITTED
+        );
+
+        if (alreadyExists) {
+            throw new RuntimeException("Du har redan en aktiv admin-begäran");
+        }
+
         Case c = new Case();
-        c.setTitle("Admin request");
-        c.setDescription("User " + user.getEmail() + " wants admin access");
+        c.setTitle("Administratörsbegäran");
+        c.setDescription("Användare " + user.getEmail() + " vill få administrationsbehörighet");
         c.setStatus(CaseStatus.SUBMITTED);
         c.setUser(user);
         c.setType("ROLE_REQUEST");
@@ -264,6 +281,7 @@ public class CaseService {
     }
 
     public CaseDTO approveRole(Long id) {
+        ensureManager();
 
         Case c = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Case not found"));
@@ -272,10 +290,12 @@ public class CaseService {
             throw new RuntimeException("Wrong type");
         }
 
-        User user = c.getCreatedBy();
-
+        User user = c.getUser();
         user.setRole(Role.ADMIN);
         userRepository.save(user);
+
+        User manager = getCurrentUser();
+        c.setAssignedTo(manager);
 
         c.setStatus(CaseStatus.APPROVED);
 
@@ -283,10 +303,22 @@ public class CaseService {
     }
 
     public CaseDTO rejectRole(Long id) {
+        ensureManager(); // stoppar admin direkt
 
         Case c = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Case not found"));
 
+        // säkerställ att det är rätt typ av ärende
+        if (!"ROLE_REQUEST".equals(c.getType())) {
+            throw new RuntimeException("Wrong type");
+        }
+
+        // förhindra dubbelhantering
+        if (c.getStatus() != CaseStatus.SUBMITTED) {
+            throw new RuntimeException("Case already handled");
+        }
+
+        // sätt status
         c.setStatus(CaseStatus.REJECTED);
 
         return mapToDTO(repo.save(c));
@@ -459,5 +491,12 @@ public class CaseService {
         }
 
         return mapToDTO(saved);
+    }
+
+    private void ensureManager() {
+        User user = getCurrentUser();
+        if (user.getRole() != Role.MANAGER) {
+            throw new RuntimeException("Forbidden");
+        }
     }
 }

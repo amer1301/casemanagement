@@ -2,6 +2,7 @@ package com.example.casemanagement.controller;
 
 import com.example.casemanagement.service.CaseService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.dto.CaseLogDTO;
@@ -12,6 +13,7 @@ import com.example.casemanagement.dto.AdminStatsDTO;
 import com.example.casemanagement.service.CaseLogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.example.casemanagement.dto.UpdateCaseStatusDTO;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.validation.Valid;
 
@@ -93,11 +95,13 @@ public class CaseController {
         return service.requestAdmin();
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/{id}/approve-role")
     public CaseDTO approveRole(@PathVariable Long id) {
         return service.approveRole(id);
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/{id}/reject-role")
     public CaseDTO rejectRole(@PathVariable Long id) {
         return service.rejectRole(id);

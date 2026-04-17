@@ -2,6 +2,7 @@ package com.example.casemanagement.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,6 +14,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -56,7 +58,11 @@ public class SecurityConfig {
                         // Admin + Manager
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MANAGER")
 
-                        // Alla inloggade
+                        // ROLE REQUEST actions → endast MANAGER
+                        .requestMatchers("/cases/*/approve-role").hasRole("MANAGER")
+                        .requestMatchers("/cases/*/reject-role").hasRole("MANAGER")
+
+                        // hämta ärenden → USER + ADMIN (men filtreras i backend)
                         .requestMatchers("/cases/**").authenticated()
 
                         // Default
