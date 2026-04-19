@@ -10,6 +10,7 @@ import com.example.casemanagement.model.Case;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.model.Role;
 import com.example.casemanagement.model.User;
+import com.example.casemanagement.model.CaseCategory;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
 import com.example.casemanagement.domain.CaseStatusTransition;
@@ -67,8 +68,16 @@ public class CaseService {
         User user = getCurrentUser();
 
         Case c = new Case();
+
         c.setTitle(dto.getTitle());
         c.setDescription(dto.getDescription());
+
+        c.setCategory(dto.getCategory());
+        c.setPersonalNumber(dto.getPersonalNumber());
+        c.setApplicantName(dto.getApplicantName());
+
+        c.setPriority(determinePriority(dto));
+
         c.setUser(user);
         c.setStatus(CaseStatus.SUBMITTED);
         c.setCreatedAt(LocalDateTime.now());
@@ -77,7 +86,6 @@ public class CaseService {
 
         caseLogService.logAction(saved, user, "CASE_CREATED");
 
-        // NOTIS TILL ALLA ADMINS
         List<User> admins = userRepository.findByRole(Role.ADMIN);
 
         for (User admin : admins) {
@@ -223,6 +231,13 @@ public class CaseService {
                 c.getCreatedAt(),
                 c.getUser() != null ? c.getUser().getEmail() : "Okänd"
         );
+
+        dto.setCategory(
+                c.getCategory() != null ? c.getCategory().name() : null
+        );
+        dto.setApplicantName(c.getApplicantName());
+        dto.setPersonalNumber(c.getPersonalNumber());
+        dto.setPriority(c.getPriority());
 
         if (c.getAssignedTo() != null) {
             dto.setAssignedToName(c.getAssignedTo().getName());
@@ -498,5 +513,36 @@ public class CaseService {
         if (user.getRole() != Role.MANAGER) {
             throw new RuntimeException("Forbidden");
         }
+    }
+
+    private int determinePriority(CreateCaseDTO dto) {
+
+        String description = dto.getDescription().toLowerCase();
+        CaseCategory category = dto.getCategory();
+
+        if (description.contains("akut")) {
+            return 5;
+        }
+
+        switch (category) {
+            case HOUSING:
+            case SICKNESS_BENEFIT:
+                return 4;
+
+            case STUDY:
+            case PARENTAL_LEAVE:
+                return 3;
+
+            case UNEMPLOYMENT_SUPPORT:
+                return 5;
+
+            default:
+                return 2;
+        }
+    }
+
+    public void updatePriority(Long id, Integer priority) {
+        Case c = repo.findById(id).orElseThrow();
+        c.setPriority(priority);
     }
 }

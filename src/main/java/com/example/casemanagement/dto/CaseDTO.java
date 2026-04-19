@@ -15,6 +15,10 @@ public class CaseDTO {
     private boolean appealed;
     private String appealReason;
     private String type;
+    private String category;
+    private String applicantName;
+    private String personalNumber;
+    private Integer priority;
 
     public CaseDTO(Long id,
                    String title,
@@ -29,6 +33,10 @@ public class CaseDTO {
         this.status = status;
         this.createdAt = createdAt;
         this.userEmail = userEmail;
+        this.category = category;
+        this.applicantName = applicantName;
+        this.personalNumber = personalNumber;
+        this.priority = priority;
     }
 
     // GETTERS
@@ -95,5 +103,37 @@ public class CaseDTO {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getApplicantName() {
+        return applicantName;
+    }
+
+    public void setApplicantName(String applicantName) {
+        this.applicantName = applicantName;
+    }
+
+    public String getPersonalNumber() {
+        return personalNumber;
+    }
+
+    public void setPersonalNumber(String personalNumber) {
+        this.personalNumber = personalNumber;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
     }
 }

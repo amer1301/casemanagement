@@ -2,12 +2,14 @@ package com.example.casemanagement.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "cases")
@@ -23,6 +25,28 @@ public class Case {
     @NotBlank(message = "Beskrivning får inte vara tom")
     @Size(max = 500, message = "Beskrivning får max vara 500 tecken")
     private String description;
+
+    @NotNull(message = "Kategori måste anges")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CaseCategory category;
+
+    @NotBlank(message = "Personnummer måste anges")
+    private String personalNumber;
+
+    @NotBlank(message = "Namn måste anges")
+    private String applicantName;
+
+    private String assignedAdmin;
+
+    @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Integer priority;
+
+    @Column(nullable = false)
+    private LocalDateTime submittedAt;
+
+    private LocalDateTime decidedAt;
 
     @Enumerated(EnumType.STRING)
     private CaseStatus status;
@@ -191,5 +215,61 @@ public class Case {
 
     public void setNotes(List<CaseNote> notes) {
         this.notes = notes;
+    }
+
+    public CaseCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(CaseCategory category) {
+        this.category = category;
+    }
+
+    public LocalDateTime getDecidedAt() {
+        return decidedAt;
+    }
+
+    public void setDecidedAt(LocalDateTime decidedAt) {
+        this.decidedAt = decidedAt;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+
+    public String getAssignedAdmin() {
+        return assignedAdmin;
+    }
+
+    public void setAssignedAdmin(String assignedAdmin) {
+        this.assignedAdmin = assignedAdmin;
+    }
+
+    public String getApplicantName() {
+        return applicantName;
+    }
+
+    public void setApplicantName(String applicantName) {
+        this.applicantName = applicantName;
+    }
+
+    public String getPersonalNumber() {
+        return personalNumber;
+    }
+
+    public void setPersonalNumber(String personalNumber) {
+        this.personalNumber = personalNumber;
     }
 }

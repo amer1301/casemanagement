@@ -13,7 +13,6 @@ import com.example.casemanagement.dto.AdminStatsDTO;
 import com.example.casemanagement.service.CaseLogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.example.casemanagement.dto.UpdateCaseStatusDTO;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.validation.Valid;
 
@@ -93,6 +92,12 @@ public class CaseController {
     @PostMapping("/request-admin")
     public CaseDTO requestAdmin() {
         return service.requestAdmin();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/priority")
+    public void updatePriority(@PathVariable Long id, @RequestBody Integer priority) {
+        service.updatePriority(id, priority);
     }
 
     @PreAuthorize("hasRole('MANAGER')")
