@@ -13,6 +13,7 @@ import com.example.casemanagement.dto.AdminStatsDTO;
 import com.example.casemanagement.service.CaseLogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.example.casemanagement.dto.UpdateCaseStatusDTO;
+import com.example.casemanagement.dto.UpdatePriorityRequest;
 
 import jakarta.validation.Valid;
 
@@ -96,8 +97,11 @@ public class CaseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/priority")
-    public void updatePriority(@PathVariable Long id, @RequestBody Integer priority) {
-        service.updatePriority(id, priority);
+    public void updatePriority(
+            @PathVariable Long id,
+            @RequestBody UpdatePriorityRequest request
+    ) {
+        service.updatePriority(id, request.getPriority());
     }
 
     @PreAuthorize("hasRole('MANAGER')")

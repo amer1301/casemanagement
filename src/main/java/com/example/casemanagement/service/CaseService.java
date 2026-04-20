@@ -86,16 +86,6 @@ public class CaseService {
 
         caseLogService.logAction(saved, user, "CASE_CREATED");
 
-        List<User> admins = userRepository.findByRole(Role.ADMIN);
-
-        for (User admin : admins) {
-            notificationService.createNotification(
-                    admin,
-                    "Nytt ärende har skapats: " + saved.getTitle(),
-                    saved.getId()
-            );
-        }
-
         return mapToDTO(saved);
     }
 
@@ -541,8 +531,33 @@ public class CaseService {
         }
     }
 
-    public void updatePriority(Long id, Integer priority) {
-        Case c = repo.findById(id).orElseThrow();
-        c.setPriority(priority);
+    public void updatePriority(Long id, Integer newPriority) {
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Case not found"));
+
+        int oldPriority = c.getPriority() != null ? c.getPriority() : 3;
+
+        c.setPriority(newPriority);
+        Case saved = repo.save(c);
+
+        if (newPriority > oldPriority) {
+
+            List<User> admins = userRepository.findByRole(Role.ADMIN);
+
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "Prioriteten höjdes för ärende: " + saved.getTitle() +
+                                " (" + oldPriority + " → " + newPriority + ")",
+                        saved.getId()
+                );
+            }
+
+            caseLogService.logAction(
+                    saved,
+                    getCurrentUser(),
+                    "PRIORITY_INCREASED_" + oldPriority + "_TO_" + newPriority
+            );
+        }
     }
 }

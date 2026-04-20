@@ -40,11 +40,7 @@ public class Case {
     private String assignedAdmin;
 
     @Column(nullable = false)
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer priority;
-
-    @Column(nullable = false)
-    private LocalDateTime submittedAt;
 
     private LocalDateTime decidedAt;
 
@@ -231,14 +227,6 @@ public class Case {
 
     public void setDecidedAt(LocalDateTime decidedAt) {
         this.decidedAt = decidedAt;
-    }
-
-    public LocalDateTime getSubmittedAt() {
-        return submittedAt;
-    }
-
-    public void setSubmittedAt(LocalDateTime submittedAt) {
-        this.submittedAt = submittedAt;
     }
 
     public Integer getPriority() {
