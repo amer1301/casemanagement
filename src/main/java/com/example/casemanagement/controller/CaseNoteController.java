@@ -1,12 +1,16 @@
 package com.example.casemanagement.controller;
 
+import com.example.casemanagement.dto.ApiResponse;
 import com.example.casemanagement.dto.CaseNoteDTO;
+import com.example.casemanagement.dto.CreateCaseNoteRequest;
 import com.example.casemanagement.service.CaseNoteService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cases/{caseId}/notes")
 public class CaseNoteController {
@@ -17,18 +21,20 @@ public class CaseNoteController {
         this.service = service;
     }
 
-    // Hämta anteckningar
+    // GET notes
     @GetMapping
-    public List<CaseNoteDTO> getNotes(@PathVariable Long caseId) {
-        return service.getNotes(caseId);
+    public ApiResponse<List<CaseNoteDTO>> getNotes(@PathVariable Long caseId) {
+        return new ApiResponse<>(service.getNotes(caseId));
     }
 
-    // Skapa anteckning
+    // CREATE note
     @PostMapping
-    public CaseNoteDTO createNote(
+    public ApiResponse<CaseNoteDTO> createNote(
             @PathVariable Long caseId,
-            @RequestBody Map<String, String> body
+            @Valid @RequestBody CreateCaseNoteRequest request
     ) {
-        return service.createNote(caseId, body.get("text"));
+        return new ApiResponse<>(
+                service.createNote(caseId, request.getText())
+        );
     }
 }

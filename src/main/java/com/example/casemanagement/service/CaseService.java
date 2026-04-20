@@ -171,4 +171,66 @@ public class CaseService {
                 .map(mapper::toCaseDTO)
                 .toList();
     }
+
+    public Map<String, Object> getDashboardStats() {
+
+        long total = repo.count();
+        long unassigned = repo.countByAssignedToIsNull();
+        long assigned = repo.countByAssignedToIsNotNull();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("total", total);
+        stats.put("unassigned", unassigned);
+        stats.put("assigned", assigned);
+
+        return stats;
+    }
+
+    public CaseDTO assignToCurrentUser(Long caseId) {
+
+        Case c = repo.findById(caseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+
+        User user = getCurrentUser();
+
+        c.setAssignedTo(user);
+
+        return mapper.toCaseDTO(repo.save(c));
+    }
+
+    public List<AdminStatsDTO> getAdminStats() {
+
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+
+        return admins.stream().map(admin -> {
+
+            long total = repo.countByAssignedTo(admin);
+            long handled = repo.countByAssignedToAndStatusNot(admin, CaseStatus.SUBMITTED);
+            long pending = repo.countByAssignedToAndStatus(admin, CaseStatus.SUBMITTED);
+
+            return new AdminStatsDTO(
+                    admin.getName(),
+                    total,
+                    handled,
+                    pending
+            );
+
+        }).toList();
+    }
+
+    public CaseDTO appealCase(Long id, String reason) {
+
+        Case c = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+
+        c.setAppealed(true);
+        c.setAppealReason(reason);
+        c.setStatus(CaseStatus.SUBMITTED);
+
+        return mapper.toCaseDTO(repo.save(c));
+    }
+
+    public void updatePriority(Long id, Integer newPriority) {
+        casePriorityService.updatePriority(id, newPriority);
+    }
 }

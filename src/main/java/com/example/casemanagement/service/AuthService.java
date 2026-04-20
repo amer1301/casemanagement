@@ -1,6 +1,7 @@
 package com.example.casemanagement.service;
 
 import com.example.casemanagement.config.JwtService;
+import com.example.casemanagement.dto.AuthResponse;
 import com.example.casemanagement.dto.LoginRequest;
 import com.example.casemanagement.dto.RegisterRequest;
 import com.example.casemanagement.mapper.AuthMapper;
@@ -53,6 +54,19 @@ public class AuthService {
         // 3. Generera token
         return jwtService.generateToken(
                 user.getEmail(),
+                user.getRole().name()
+        );
+    }
+
+    public AuthResponse buildAuthResponse(String email, String token) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new AuthResponse(
+                token,
+                user.getEmail(),
+                user.getName(),
                 user.getRole().name()
         );
     }

@@ -42,14 +42,16 @@ public class CaseNoteService {
     }
 
     // SKAPA ANTECKNING
-    public CaseNoteDTO createNote(CreateCaseNoteRequest request) {
+    public CaseNoteDTO createNote(Long caseId, String text) {
 
         // 1. Hämta data
-        Case c = caseRepo.findById(request.getCaseId()).orElseThrow();
+        Case c = caseRepo.findById(caseId)
+                .orElseThrow(() -> new RuntimeException("Case not found"));
+
         User user = getCurrentUser();
 
         // 2. Mappa
-        CaseNote note = mapper.toCaseNote(request.getText(), c, user);
+        CaseNote note = mapper.toCaseNote(text, c, user);
 
         // 3. Spara + returnera
         return mapper.toCaseNoteDTO(noteRepo.save(note));

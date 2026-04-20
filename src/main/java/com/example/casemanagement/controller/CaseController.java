@@ -1,21 +1,13 @@
 package com.example.casemanagement.controller;
 
+import com.example.casemanagement.dto.*;
+import com.example.casemanagement.model.CaseStatus;
+import com.example.casemanagement.service.CaseLogService;
 import com.example.casemanagement.service.CaseService;
-import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.example.casemanagement.model.CaseStatus;
-import com.example.casemanagement.dto.CaseLogDTO;
-import com.example.casemanagement.dto.CaseDTO;
-import com.example.casemanagement.dto.CreateCaseDTO;
-import com.example.casemanagement.dto.UpdateCaseDTO;
-import com.example.casemanagement.dto.AdminStatsDTO;
-import com.example.casemanagement.service.CaseLogService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import com.example.casemanagement.dto.UpdateCaseStatusDTO;
-import com.example.casemanagement.dto.UpdatePriorityRequest;
-
-import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -24,129 +16,149 @@ import java.util.Map;
 @RestController
 @RequestMapping("/cases")
 public class CaseController {
+
     private final CaseService service;
     private final CaseLogService caseLogService;
 
     public CaseController(CaseService service, CaseLogService caseLogService) {
-
         this.service = service;
         this.caseLogService = caseLogService;
     }
 
+    // GET ALL / FILTER
     @GetMapping
-    public Object getAll(
+    public ApiResponse<?> getAll(
             @RequestParam(required = false) CaseStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy) {
 
         if (status != null) {
-            return service.getByStatus(status);
+            return new ApiResponse<>(service.getByStatus(status));
         }
 
-        return service.getAll(page, size, sortBy).getContent();
+        return new ApiResponse<>(service.getAll(page, size, sortBy).getContent());
     }
 
+    // CREATE
     @PostMapping
-    public CaseDTO create(@Valid @RequestBody CreateCaseDTO dto) {
-
-        return service.create(dto);
+    public ApiResponse<CaseDTO> create(@Valid @RequestBody CreateCaseDTO dto) {
+        return new ApiResponse<>(service.create(dto));
     }
 
+    // GET BY ID
     @GetMapping("/{id}")
-    public CaseDTO getCaseById(@PathVariable Long id) {
-        return service.getCaseById(id);
+    public ApiResponse<CaseDTO> getCaseById(@PathVariable Long id) {
+        return new ApiResponse<>(service.getCaseById(id));
     }
 
+    // DELETE
     @DeleteMapping("/{id}")
-    public void deleteCase(@PathVariable Long id) {
+    public ApiResponse<String> deleteCase(@PathVariable Long id) {
         service.deleteCase(id);
+        return new ApiResponse<>("Case deleted");
     }
 
+    // UPDATE
     @PutMapping("/{id}")
-    public CaseDTO update(
+    public ApiResponse<CaseDTO> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCaseDTO dto) {
-        return service.update(id, dto);
+
+        return new ApiResponse<>(service.update(id, dto));
     }
 
+    // UPDATE STATUS
     @PatchMapping("/{id}/status")
-    public ResponseEntity<CaseDTO> updateStatus(
+    public ApiResponse<CaseDTO> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCaseStatusDTO dto
     ) {
-        return ResponseEntity.ok(
+        return new ApiResponse<>(
                 service.updateStatus(id, dto.getStatus(), dto.getReason())
         );
     }
 
+    // LOGS
     @GetMapping("/{id}/logs")
-    public List<CaseLogDTO> getLogs(@PathVariable Long id) {
-        return caseLogService.getLogs(id);
+    public ApiResponse<List<CaseLogDTO>> getLogs(@PathVariable Long id) {
+        return new ApiResponse<>(caseLogService.getLogs(id));
     }
 
+    // MY CASES
     @GetMapping("/my")
-    public List<CaseDTO> getMyCase() {
-        return service.getMyCases();
+    public ApiResponse<List<CaseDTO>> getMyCase() {
+        return new ApiResponse<>(service.getMyCases());
     }
 
+    // REQUEST ADMIN
     @PostMapping("/request-admin")
-    public CaseDTO requestAdmin() {
-        return service.requestAdmin();
+    public ApiResponse<CaseDTO> requestAdmin() {
+        return new ApiResponse<>(service.requestAdmin());
     }
 
+    // UPDATE PRIORITY
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/priority")
-    public void updatePriority(
+    public ApiResponse<String> updatePriority(
             @PathVariable Long id,
             @RequestBody UpdatePriorityRequest request
     ) {
         service.updatePriority(id, request.getPriority());
+        return new ApiResponse<>("Priority updated");
     }
 
+    // APPROVE ROLE
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/{id}/approve-role")
-    public CaseDTO approveRole(@PathVariable Long id) {
-        return service.approveRole(id);
+    public ApiResponse<CaseDTO> approveRole(@PathVariable Long id) {
+        return new ApiResponse<>(service.approveRole(id));
     }
 
+    // REJECT ROLE
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/{id}/reject-role")
-    public CaseDTO rejectRole(@PathVariable Long id) {
-        return service.rejectRole(id);
+    public ApiResponse<CaseDTO> rejectRole(@PathVariable Long id) {
+        return new ApiResponse<>(service.rejectRole(id));
     }
 
+    // DASHBOARD
     @GetMapping("/dashboard")
-    public Map<String, Object> dashboard() {
-        return service.getDashboardStats();
+    public ApiResponse<Map<String, Object>> dashboard() {
+        return new ApiResponse<>(service.getDashboardStats());
     }
 
+    // ASSIGN CASE
     @PatchMapping("/{id}/assign")
-    public CaseDTO assign(@PathVariable Long id) {
-        return service.assignToCurrentUser(id);
+    public ApiResponse<CaseDTO> assign(@PathVariable Long id) {
+        return new ApiResponse<>(service.assignToCurrentUser(id));
     }
 
+    // ADMIN STATS
     @GetMapping("/dashboard/admins")
-    public List<AdminStatsDTO> getAdminStats() {
-        return service.getAdminStats();
+    public ApiResponse<List<AdminStatsDTO>> getAdminStats() {
+        return new ApiResponse<>(service.getAdminStats());
     }
 
+    // UNASSIGNED
     @GetMapping("/unassigned")
-    public List<CaseDTO> getUnassigned() {
-        return service.getUnassignedCases();
+    public ApiResponse<List<CaseDTO>> getUnassigned() {
+        return new ApiResponse<>(service.getUnassignedCases());
     }
 
+    // ASSIGNED TO ME
     @GetMapping("/assigned")
-    public List<CaseDTO> getAssignedToMe() {
-        return service.getMyAssignedCases();
+    public ApiResponse<List<CaseDTO>> getAssignedToMe() {
+        return new ApiResponse<>(service.getMyAssignedCases());
     }
 
+    // APPEAL
     @PostMapping("/{id}/appeal")
-    public ResponseEntity<CaseDTO> appealCase(
+    public ApiResponse<CaseDTO> appealCase(
             @PathVariable Long id,
             @RequestBody Map<String, String> body
     ) {
-        return ResponseEntity.ok(
+        return new ApiResponse<>(
                 service.appealCase(id, body.get("reason"))
         );
     }

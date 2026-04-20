@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/reports")
 public class ReportController {
@@ -23,7 +25,7 @@ public class ReportController {
 
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=monthly-report.csv")
-                .header("Content-Type, text/csv")
-                .body(csv.getBytes());
+                .header("Content-Type", "text/csv")
+                .body(csv.getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -1,48 +1,40 @@
 package com.example.casemanagement.controller;
 
+import com.example.casemanagement.dto.ApiResponse;
+import com.example.casemanagement.dto.AuthResponse;
 import com.example.casemanagement.dto.LoginRequest;
-import com.example.casemanagement.model.User;
-import com.example.casemanagement.repository.UserRepository;
+import com.example.casemanagement.dto.RegisterRequest;
 import com.example.casemanagement.service.AuthService;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
-    private final UserRepository userRepository;
 
-    // constructor injection
-    public AuthController(AuthService authService, UserRepository userRepository) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
-    public User register(@RequestBody LoginRequest request) {
-        return authService.register(
-                request.getName(),
-                request.getEmail(),
-                request.getPassword()
-        );
+    public ApiResponse<String> register(@RequestBody RegisterRequest request) {
+
+        authService.register(request);
+
+        return new ApiResponse<>("User registered successfully");
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginRequest request) {
+    public ApiResponse<AuthResponse> login(@RequestBody LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        String token = authService.login(request); // 👈 FIX
 
-        String token = authService.login(request.getEmail(), request.getPassword());
-
-        return Map.of(
-                "token", token,
-                "role", user.getRole().name(),
-                "email", user.getEmail(),
-                "name", user.getName()
+        AuthResponse response = authService.buildAuthResponse(
+                request.getEmail(),
+                token
         );
+
+        return new ApiResponse<>(response);
     }
 }

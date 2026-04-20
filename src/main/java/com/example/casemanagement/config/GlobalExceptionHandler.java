@@ -1,5 +1,8 @@
-package com.example.casemanagement.exception;
+package com.example.casemanagement.config;
 
+import com.example.casemanagement.exception.ForbiddenException;
+import com.example.casemanagement.exception.InvalidTransitionException;
+import com.example.casemanagement.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,54 +27,47 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
-        response.put("status", 400);
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("message", "Validation failed");
         response.put("errors", errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    // Custom: Resource not found
+    // 404
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", 404);
-        response.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    // Fallback för övriga fel
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", 500);
-        response.put("message", "Något gick fel");
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
+    // 403
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<?> handleForbidden(ForbiddenException ex) {
-        return ResponseEntity.status(403).body(
-                Map.of(
-                        "message", ex.getMessage(),
-                        "status", 403,
-                        "timestamp", LocalDateTime.now()
-                )
-        );
+    public ResponseEntity<Map<String, Object>> handleForbidden(ForbiddenException ex) {
+        return buildResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    // 400 (business rule, t.ex. invalid status change)
     @ExceptionHandler(InvalidTransitionException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidTransition(InvalidTransitionException ex) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 
+    // 500 fallback
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        return buildResponse("Något gick fel", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // Gemensam response-builder
+    private ResponseEntity<Map<String, Object>> buildResponse(
+            String message,
+            HttpStatus status
+    ) {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
-        response.put("status", 400);
-        response.put("message", ex.getMessage());
+        response.put("status", status.value());
+        response.put("message", message);
 
-        return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, status);
     }
 }
