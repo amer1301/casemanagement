@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Entity
 @Table(name = "cases")
 public class Case {
+
+    public static final String TYPE_ROLE_REQUEST = "ROLE_REQUEST";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

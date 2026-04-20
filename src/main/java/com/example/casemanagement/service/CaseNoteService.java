@@ -1,6 +1,8 @@
 package com.example.casemanagement.service;
 
 import com.example.casemanagement.dto.CaseNoteDTO;
+import com.example.casemanagement.dto.CreateCaseNoteRequest;
+import com.example.casemanagement.mapper.CaseMapper;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.model.CaseNote;
 import com.example.casemanagement.model.User;
@@ -18,13 +20,16 @@ public class CaseNoteService {
     private final CaseNoteRepository noteRepo;
     private final CaseRepository caseRepo;
     private final UserRepository userRepo;
+    private final CaseMapper mapper;
 
     public CaseNoteService(CaseNoteRepository noteRepo,
                            CaseRepository caseRepo,
-                           UserRepository userRepo) {
+                           UserRepository userRepo,
+                           CaseMapper mapper) {
         this.noteRepo = noteRepo;
         this.caseRepo = caseRepo;
         this.userRepo = userRepo;
+        this.mapper = mapper;
     }
 
     private User getCurrentUser() {
@@ -37,30 +42,24 @@ public class CaseNoteService {
     }
 
     // SKAPA ANTECKNING
-    public CaseNoteDTO createNote(Long caseId, String text) {
+    public CaseNoteDTO createNote(CreateCaseNoteRequest request) {
 
-        Case c = caseRepo.findById(caseId).orElseThrow();
+        // 1. Hämta data
+        Case c = caseRepo.findById(request.getCaseId()).orElseThrow();
         User user = getCurrentUser();
 
-        CaseNote note = new CaseNote(text, c, user);
+        // 2. Mappa
+        CaseNote note = mapper.toCaseNote(request.getText(), c, user);
 
-        return map(noteRepo.save(note));
+        // 3. Spara + returnera
+        return mapper.toCaseNoteDTO(noteRepo.save(note));
     }
 
     // HÄMTA ANTECKNINGAR
     public List<CaseNoteDTO> getNotes(Long caseId) {
         return noteRepo.findByCaseEntityId(caseId)
                 .stream()
-                .map(this::map)
+                .map(mapper::toCaseNoteDTO)
                 .toList();
-    }
-
-    private CaseNoteDTO map(CaseNote n) {
-        return new CaseNoteDTO(
-                n.getId(),
-                n.getText(),
-                n.getCreatedBy().getName(),
-                n.getCreatedAt()
-        );
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import java.util.List;
@@ -18,7 +20,7 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     List<Case> findByAssignedToIsNull();
 
     List<Case> findByAssignedTo(User user);
-
+    List<Case> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     boolean existsByUserAndTypeAndStatus(User user, String type, CaseStatus status);
 
     long countByAssignedToIsNull();

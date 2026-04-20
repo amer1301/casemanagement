@@ -5,6 +5,7 @@ import com.example.casemanagement.repository.CaseRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -17,31 +18,28 @@ public class ReportService {
     }
 
     public String generateMonthlyReport() {
-        List<Case> cases = caseRepository.findAll();
 
         LocalDate now = LocalDate.now();
 
-        List<Case> monthlyCases = cases.stream()
-                .filter(c -> c.getCreatedAt() != null)
-                .filter(c -> c.getCreatedAt().getMonth() == now.getMonth()
-                        && c.getCreatedAt().getYear() == now.getYear())
-                .toList();
+        LocalDateTime start = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59);
+
+        List<Case> monthlyCases = caseRepository.findByCreatedAtBetween(start, end);
 
         long total = monthlyCases.size();
 
-        long handled = monthlyCases.stream()
-                .filter(c -> c.getStatus().name().equals("APPROVED"))
-                .count();
+        long handled = 0;
+        long pending = 0;
+        long rejected = 0;
 
-        long pending = monthlyCases.stream()
-                .filter(c -> c.getStatus().name().equals("SUBMITTED"))
-                .count();
+        for (Case c : monthlyCases) {
+            switch (c.getStatus()) {
+                case APPROVED -> handled++;
+                case SUBMITTED -> pending++;
+                case REJECTED -> rejected++;
+            }
+        }
 
-        long rejected = monthlyCases.stream()
-                .filter(c -> c.getStatus().name().equals("REJECTED"))
-                .count();
-
-        // CSV-format
         return "Typ,Antal\n" +
                 "Totala ärenden," + total + "\n" +
                 "Hanterade," + handled + "\n" +

@@ -1,11 +1,13 @@
 package com.example.casemanagement.service;
 
+import com.example.casemanagement.dto.NotificationDTO;
+import com.example.casemanagement.exception.ForbiddenException;
+import com.example.casemanagement.exception.ResourceNotFoundException;
+import com.example.casemanagement.mapper.NotificationMapper;
 import com.example.casemanagement.model.Notification;
 import com.example.casemanagement.model.User;
 import com.example.casemanagement.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
-import com.example.casemanagement.repository.UserRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,11 +16,12 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository repo;
-    private final UserRepository userRepository;
+    private final NotificationMapper mapper;
 
-    public NotificationService(NotificationRepository repo, UserRepository userRepository) {
+    public NotificationService(NotificationRepository repo,
+                               NotificationMapper mapper) {
         this.repo = repo;
-        this.userRepository = userRepository;
+        this.mapper = mapper;
     }
 
     public void createNotification(User user, String message, Long caseId) {
@@ -27,25 +30,32 @@ public class NotificationService {
         n.setMessage(message);
         n.setCaseId(caseId);
         n.setCreatedAt(LocalDateTime.now());
+        n.setRead(false);
+        n.setDeleted(false);
 
         repo.save(n);
     }
 
-    public List<Notification> getMyNotifications(User user) {
-        return repo.findByUserAndDeletedFalseOrderByCreatedAtDesc(user);
+    public List<NotificationDTO> getMyNotifications(User user) {
+        return repo.findByUserAndDeletedFalseOrderByCreatedAtDesc(user)
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
     }
 
-    public void delete(Long id) {
+    public void delete(Long id, User currentUser) {
         Notification n = repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
+
+        if (!n.getUser().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Not allowed");
+        }
 
         n.setDeleted(true);
         repo.save(n);
     }
 
-    public void markAllAsReadForCurrentUser() {
-        User user = getCurrentUser();
-
+    public void markAllAsRead(User user) {
         List<Notification> notifications =
                 repo.findByUserAndDeletedFalse(user);
 
@@ -56,16 +66,7 @@ public class NotificationService {
         repo.saveAll(notifications);
     }
 
-    public int getUnreadCount() {
-        User user = getCurrentUser();
+    public int getUnreadCount(User user) {
         return repo.countByUserAndIsReadFalseAndDeletedFalse(user);
-    }
-
-    private User getCurrentUser() {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email).orElseThrow();
     }
 }
