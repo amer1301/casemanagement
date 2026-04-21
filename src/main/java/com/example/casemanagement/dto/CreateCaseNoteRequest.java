@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 
 public class CreateCaseNoteRequest {
 
-    @NotNull
     private Long caseId;
 
     @NotNull

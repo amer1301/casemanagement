@@ -20,6 +20,9 @@ public class CaseDTO {
     private String personalNumber;
     private Integer priority;
 
+    public CaseDTO() {
+    }
+
     public CaseDTO(Long id,
                    String title,
                    String description,
@@ -33,13 +36,12 @@ public class CaseDTO {
         this.status = status;
         this.createdAt = createdAt;
         this.userEmail = userEmail;
-        this.category = category;
-        this.applicantName = applicantName;
-        this.personalNumber = personalNumber;
-        this.priority = priority;
     }
 
+    // ====================
     // GETTERS
+    // ====================
+
     public Long getId() {
         return id;
     }
@@ -84,7 +86,50 @@ public class CaseDTO {
         return type;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public String getApplicantName() {
+        return applicantName;
+    }
+
+    public String getPersonalNumber() {
+        return personalNumber;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    // ====================
     // SETTERS
+    // ====================
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
     public void setAssignedToName(String assignedToName) {
         this.assignedToName = assignedToName;
     }
@@ -105,32 +150,16 @@ public class CaseDTO {
         this.type = type;
     }
 
-    public String getCategory() {
-        return category;
-    }
-
     public void setCategory(String category) {
         this.category = category;
-    }
-
-    public String getApplicantName() {
-        return applicantName;
     }
 
     public void setApplicantName(String applicantName) {
         this.applicantName = applicantName;
     }
 
-    public String getPersonalNumber() {
-        return personalNumber;
-    }
-
     public void setPersonalNumber(String personalNumber) {
         this.personalNumber = personalNumber;
-    }
-
-    public Integer getPriority() {
-        return priority;
     }
 
     public void setPriority(Integer priority) {
