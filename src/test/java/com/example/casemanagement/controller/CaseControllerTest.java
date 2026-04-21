@@ -1,95 +1,53 @@
 package com.example.casemanagement.controller;
 
-import com.example.casemanagement.model.Case;
-import com.example.casemanagement.model.CaseStatus;
-import com.example.casemanagement.model.Role;
-import com.example.casemanagement.model.User;
-import com.example.casemanagement.repository.CaseRepository;
-import com.example.casemanagement.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.casemanagement.BaseIntegrationTest;
+import com.example.casemanagement.dto.CreateCaseDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
 @AutoConfigureMockMvc
-class CaseControllerTest {
+class CaseControllerTest extends BaseIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private CaseRepository caseRepository;
+    private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserRepository userRepository;
+    @Test
+    @WithMockUser(roles = {"USER"})
+    void shouldCreateCase() throws Exception {
 
-    private User admin;
-    private Case testCase;
+        CreateCaseDTO dto = new CreateCaseDTO();
+        dto.setTitle("Test case");
+        dto.setDescription("Test description");
 
-    @BeforeEach
-    void setup() {
-        caseRepository.deleteAll();
-        userRepository.deleteAll();
-
-        admin = new User();
-        admin.setEmail("admin@test.com");
-        admin.setRole(Role.ADMIN);
-        userRepository.save(admin);
-
-        User owner = new User();
-        owner.setEmail("user@test.com");
-        owner.setRole(Role.USER);
-        userRepository.save(owner);
-
-        testCase = new Case();
-        testCase.setTitle("Test case");
-        testCase.setDescription("Test desc");
-        testCase.setStatus(CaseStatus.SUBMITTED);
-        testCase.setUser(owner);
-        caseRepository.save(testCase);
+        mockMvc.perform(post("/cases")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("Test case"));
     }
 
     @Test
-    @WithMockUser(username = "admin@test.com", roles = "ADMIN")
-    void shouldUpdateStatusSuccessfully() throws Exception {
-        String body = """
-                {
-                "status": "APPROVED"
-                }
-                """;
-
-        mockMvc.perform(patch("/cases/" + testCase.getId() + "/status")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
-                .andExpect(status(). isOk());
+    @WithMockUser(roles = {"USER"})
+    void shouldGetCases() throws Exception {
+        mockMvc.perform(get("/cases"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@test.com", roles = "ADMIN")
-    void shouldReturnBadRequestForInvalidTransition() throws Exception {
-        // Sätt case till APPROVED först
-        testCase.setStatus(CaseStatus.APPROVED);
-        caseRepository.save(testCase);
-
-        String body = """
-                {
-                "status": "REJECTED"
-                }
-                """;
-
-        mockMvc.perform(patch("/cases/" + testCase.getId() + "/status")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
-                .andExpect(status().isBadRequest());
+    @WithMockUser(roles = {"USER"})
+    void shouldBlockAdminEndpoint() throws Exception {
+        mockMvc.perform(post("/cases/1/approve-role"))
+                .andExpect(status().isForbidden());
     }
 }

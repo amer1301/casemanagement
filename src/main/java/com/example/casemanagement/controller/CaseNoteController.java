@@ -21,20 +21,20 @@ public class CaseNoteController {
         this.service = service;
     }
 
-    // GET notes
     @GetMapping
     public ApiResponse<List<CaseNoteDTO>> getNotes(@PathVariable Long caseId) {
         return new ApiResponse<>(service.getNotes(caseId));
     }
 
-    // CREATE note
     @PostMapping
     public ApiResponse<CaseNoteDTO> createNote(
             @PathVariable Long caseId,
             @Valid @RequestBody CreateCaseNoteRequest request
     ) {
+        request.setCaseId(caseId);
+
         return new ApiResponse<>(
-                service.createNote(caseId, request.getText())
+                service.createNote(request)
         );
     }
 }

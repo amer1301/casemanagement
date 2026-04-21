@@ -34,7 +34,7 @@ public class CaseLogService {
 
         return repo.findByCaseEntityId(caseId)
                 .stream()
-                .map(mapper::toDTO)
+                .map(mapper::toCaseLogDTO)
                 .toList();
     }
 }
