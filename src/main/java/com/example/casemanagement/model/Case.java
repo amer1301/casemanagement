@@ -9,13 +9,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "cases")
 public class Case {
-
-    public static final String TYPE_ROLE_REQUEST = "ROLE_REQUEST";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,8 +53,6 @@ public class Case {
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
-
-    private String type;
 
     private String rejectionReason;
 
@@ -158,14 +153,6 @@ public class Case {
     public void addLog(CaseLog log) {
         logs.add(log);
         log.setCaseEntity(this);
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public User getCreatedBy() {

@@ -42,16 +42,19 @@ public class AuthService {
 
     public String login(LoginRequest request) {
 
-        // 1. Hämta user
-        User user = userRepository.findByEmail(request.getEmail())
+        // 1. Trimma email
+        String email = request.getEmail().trim();
+
+        // 2. Case-insensitive lookup
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 2. Verifiera lösenord
+        // 3. Verifiera lösenord
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
 
-        // 3. Generera token
+        // 4. Generera token
         return jwtService.generateToken(
                 user.getEmail(),
                 user.getRole().name()

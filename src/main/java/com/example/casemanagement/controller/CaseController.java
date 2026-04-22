@@ -91,11 +91,6 @@ public class CaseController {
         return new ApiResponse<>(service.getMyCases());
     }
 
-    // REQUEST ADMIN
-    @PostMapping("/request-admin")
-    public ApiResponse<CaseDTO> requestAdmin() {
-        return new ApiResponse<>(service.requestAdmin());
-    }
 
     // UPDATE PRIORITY
     @PreAuthorize("hasRole('ADMIN')")
@@ -108,19 +103,6 @@ public class CaseController {
         return new ApiResponse<>("Priority updated");
     }
 
-    // APPROVE ROLE
-    @PreAuthorize("hasRole('MANAGER')")
-    @PostMapping("/{id}/approve-role")
-    public ApiResponse<CaseDTO> approveRole(@PathVariable Long id) {
-        return new ApiResponse<>(service.approveRole(id));
-    }
-
-    // REJECT ROLE
-    @PreAuthorize("hasRole('MANAGER')")
-    @PostMapping("/{id}/reject-role")
-    public ApiResponse<CaseDTO> rejectRole(@PathVariable Long id) {
-        return new ApiResponse<>(service.rejectRole(id));
-    }
 
     // DASHBOARD
     @GetMapping("/dashboard")

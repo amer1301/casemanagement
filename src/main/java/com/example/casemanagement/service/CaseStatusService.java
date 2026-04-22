@@ -44,8 +44,6 @@ public class CaseStatusService {
             c.setRejectionReason(reason);
         }
 
-        handleRoleRequest(c, newStatus, currentUser);
-
         c.setStatus(newStatus);
 
         Case saved = repo.save(c);
@@ -85,23 +83,6 @@ public class CaseStatusService {
         }
     }
 
-    private void handleRoleRequest(Case c, CaseStatus newStatus, User currentUser) {
-
-        if (!"ROLE_REQUEST".equals(c.getType())) return;
-
-        User targetUser = c.getUser();
-
-        if (newStatus == CaseStatus.APPROVED) {
-            targetUser.setRole(Role.ADMIN);
-            userRepository.save(targetUser);
-
-            caseLogService.logAction(c, currentUser, "USER_PROMOTED_TO_ADMIN");
-        }
-
-        if (newStatus == CaseStatus.REJECTED) {
-            caseLogService.logAction(c, currentUser, "ADMIN_REQUEST_REJECTED");
-        }
-    }
 
     private void sendStatusNotification(Case saved, CaseStatus newStatus, User currentUser) {
 

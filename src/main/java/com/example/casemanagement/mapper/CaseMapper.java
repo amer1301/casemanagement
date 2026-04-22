@@ -77,7 +77,6 @@ public class CaseMapper {
 
         dto.setAppealed(c.isAppealed());
         dto.setAppealReason(c.getAppealReason());
-        dto.setType(c.getType());
 
         return dto;
     }
@@ -95,18 +94,6 @@ public class CaseMapper {
         c.setUser(user);
         c.setStatus(CaseStatus.SUBMITTED);
         c.setCreatedAt(LocalDateTime.now());
-
-        return c;
-    }
-
-    public Case toRoleRequestCase(User user) {
-        Case c = new Case();
-
-        c.setTitle("Administratörsbegäran");
-        c.setDescription("Användare " + user.getEmail() + " vill bli admin");
-        c.setStatus(CaseStatus.SUBMITTED);
-        c.setUser(user);
-        c.setType("ROLE_REQUEST");
 
         return c;
     }

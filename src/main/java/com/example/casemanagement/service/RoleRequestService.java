@@ -3,8 +3,10 @@ package com.example.casemanagement.service;
 import com.example.casemanagement.exception.ForbiddenException;
 import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.mapper.CaseMapper;
+import java.util.List;
 import com.example.casemanagement.model.*;
 import com.example.casemanagement.repository.CaseRepository;
+import com.example.casemanagement.repository.RoleRequestRepository;
 import com.example.casemanagement.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
@@ -12,98 +14,85 @@ import org.springframework.stereotype.Service;
 @Service
 public class RoleRequestService {
 
-    private final CaseRepository repo;
     private final UserRepository userRepository;
-    private final CaseLogService caseLogService;
-    private final CaseMapper mapper;
+    private final RoleRequestRepository repo;
 
-    public RoleRequestService(CaseRepository repo,
+    public RoleRequestService(
                               UserRepository userRepository,
-                              CaseLogService caseLogService,
-                              CaseMapper mapper) {
-        this.repo = repo;
+                              RoleRequestRepository repo
+                              ) {
         this.userRepository = userRepository;
-        this.caseLogService = caseLogService;
-        this.mapper = mapper;
+        this.repo = repo;
     }
 
-    public Case createRoleRequest(User user) {
+    public RoleRequest createRoleRequest(User user) {
 
-        boolean exists = repo.existsByUserAndTypeAndStatus(
+        boolean exists = repo.existsByUserAndStatus(
                 user,
-                "ROLE_REQUEST",
-                CaseStatus.SUBMITTED
+                RoleRequestStatus.PENDING
         );
 
         if (exists) {
             throw new ForbiddenException("Du har redan en aktiv admin-begäran");
         }
 
-        Case c = mapper.toRoleRequestCase(user);
+        RoleRequest request = new RoleRequest(user);
 
-        Case saved = repo.save(c);
-
-        caseLogService.logAction(saved, user, "ROLE_REQUEST_CREATED");
-
-        return saved;
+        return repo.save(request);
     }
 
-    public Case approveRole(Long id, User manager) {
+    public RoleRequest approveRole(Long id, User manager) {
 
         ensureManager(manager);
 
-        Case c = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+        RoleRequest r = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
 
-        if (!Case.TYPE_ROLE_REQUEST.equals(c.getType())) {
-            throw new ForbiddenException("Wrong type");
+        if (r.getStatus() != RoleRequestStatus.PENDING) {
+            throw new ForbiddenException("Already handled");
         }
 
-        if (c.getStatus() != CaseStatus.SUBMITTED) {
-            throw new ForbiddenException("Case already handled");
-        }
-
-        User user = c.getUser();
+        User user = r.getUser();
         user.setRole(Role.ADMIN);
         userRepository.save(user);
 
-        c.setAssignedTo(manager);
-        c.setStatus(CaseStatus.APPROVED);
+        r.setStatus(RoleRequestStatus.APPROVED);
 
-        Case saved = repo.save(c);
-
-        caseLogService.logAction(
-                saved,
-                manager,
-                "ROLE_REQUEST_APPROVED"
-        );
-
-        return saved;
+        return repo.save(r);
     }
 
-    public Case rejectRole(Long id, User manager) {
+    public RoleRequest rejectRole(Long id, User manager) {
 
         ensureManager(manager);
 
-        Case c = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
+        RoleRequest r = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
 
-        if (!"ROLE_REQUEST".equals(c.getType())) {
-            throw new ForbiddenException("Wrong type");
+        if (r.getStatus() != RoleRequestStatus.PENDING) {
+            throw new ForbiddenException("Already handled");
         }
 
-        if (c.getStatus() != CaseStatus.SUBMITTED) {
-            throw new ForbiddenException("Case already handled");
-        }
+        r.setStatus(RoleRequestStatus.REJECTED);
 
-        c.setStatus(CaseStatus.REJECTED);
-
-        return repo.save(c);
+        return repo.save(r);
     }
 
     private void ensureManager(User user) {
         if (user.getRole() != Role.MANAGER) {
             throw new ForbiddenException("Only manager allowed");
         }
+    }
+
+    public List<RoleRequest> getAll(User user) {
+
+        if (user.getRole() != Role.MANAGER) {
+            throw new ForbiddenException("Only manager allowed");
+        }
+
+        return repo.findAll();
+    }
+
+    public List<RoleRequest> getMyRequests(User user) {
+        return repo.findByUser(user);
     }
 }

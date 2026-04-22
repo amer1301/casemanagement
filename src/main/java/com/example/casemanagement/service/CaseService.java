@@ -129,33 +129,6 @@ public class CaseService {
                 .toList();
     }
 
-    public CaseDTO requestAdmin() {
-
-        User user = getCurrentUser();
-
-        Case saved = roleRequestService.createRoleRequest(user);
-
-        return mapper.toCaseDTO(saved);
-    }
-
-    public CaseDTO approveRole(Long id) {
-
-        User manager = getCurrentUser();
-
-        Case updated = roleRequestService.approveRole(id, manager);
-
-        return mapper.toCaseDTO(updated);
-    }
-
-    public CaseDTO rejectRole(Long id) {
-
-        User manager = getCurrentUser();
-
-        Case updated = roleRequestService.rejectRole(id, manager);
-
-        return mapper.toCaseDTO(updated);
-    }
-
     public List<CaseDTO> getUnassignedCases() {
         return repo.findByAssignedToIsNull()
                 .stream()

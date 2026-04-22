@@ -21,7 +21,6 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
 
     List<Case> findByAssignedTo(User user);
     List<Case> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
-    boolean existsByUserAndTypeAndStatus(User user, String type, CaseStatus status);
 
     long countByAssignedToIsNull();
     long countByAssignedToIsNotNull();
