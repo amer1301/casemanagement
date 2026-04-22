@@ -2,14 +2,14 @@ package com.example.casemanagement.service;
 
 import com.example.casemanagement.exception.ForbiddenException;
 import com.example.casemanagement.exception.ResourceNotFoundException;
-import com.example.casemanagement.mapper.CaseMapper;
-import java.util.List;
 import com.example.casemanagement.model.*;
-import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.RoleRequestRepository;
 import com.example.casemanagement.repository.UserRepository;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class RoleRequestService {
@@ -18,16 +18,39 @@ public class RoleRequestService {
     private final RoleRequestRepository repo;
 
     public RoleRequestService(
-                              UserRepository userRepository,
-                              RoleRequestRepository repo
-                              ) {
+            UserRepository userRepository,
+            RoleRequestRepository repo
+    ) {
         this.userRepository = userRepository;
         this.repo = repo;
     }
 
-    public RoleRequest createRoleRequest(User user) {
+    // =========================
+    // HELPER
+    // =========================
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
 
-        boolean exists = repo.existsByUserAndStatus(
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    private void ensureManager(User user) {
+        if (user.getRole() != Role.MANAGER) {
+            throw new ForbiddenException("Only manager allowed");
+        }
+    }
+
+    // =========================
+    // CREATE
+    // =========================
+    public RoleRequest createRoleRequest() {
+
+        User user = getCurrentUser();
+
+        boolean exists = repo.existsByUserAndStatusAndDeletedFalse(
                 user,
                 RoleRequestStatus.PENDING
         );
@@ -41,12 +64,20 @@ public class RoleRequestService {
         return repo.save(request);
     }
 
-    public RoleRequest approveRole(Long id, User manager) {
+    // =========================
+    // APPROVE
+    // =========================
+    public RoleRequest approveRole(Long id) {
 
+        User manager = getCurrentUser();
         ensureManager(manager);
 
         RoleRequest r = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found"));
+
+        if (r.isDeleted()) {
+            throw new ForbiddenException("Request is deleted");
+        }
 
         if (r.getStatus() != RoleRequestStatus.PENDING) {
             throw new ForbiddenException("Already handled");
@@ -61,12 +92,20 @@ public class RoleRequestService {
         return repo.save(r);
     }
 
-    public RoleRequest rejectRole(Long id, User manager) {
+    // =========================
+    // REJECT
+    // =========================
+    public RoleRequest rejectRole(Long id) {
 
+        User manager = getCurrentUser();
         ensureManager(manager);
 
         RoleRequest r = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found"));
+
+        if (r.isDeleted()) {
+            throw new ForbiddenException("Request is deleted");
+        }
 
         if (r.getStatus() != RoleRequestStatus.PENDING) {
             throw new ForbiddenException("Already handled");
@@ -77,22 +116,43 @@ public class RoleRequestService {
         return repo.save(r);
     }
 
-    private void ensureManager(User user) {
-        if (user.getRole() != Role.MANAGER) {
-            throw new ForbiddenException("Only manager allowed");
-        }
+    // =========================
+    // GET ALL (MANAGER)
+    // =========================
+    public List<RoleRequest> getAll() {
+
+        User user = getCurrentUser();
+        ensureManager(user);
+
+        return repo.findByDeletedFalse();
     }
 
-    public List<RoleRequest> getAll(User user) {
+    // =========================
+    // GET MY REQUESTS
+    // =========================
+    public List<RoleRequest> getMyRequests() {
 
-        if (user.getRole() != Role.MANAGER) {
-            throw new ForbiddenException("Only manager allowed");
-        }
+        User user = getCurrentUser();
 
-        return repo.findAll();
+        return repo.findByUserAndDeletedFalse(user);
     }
 
-    public List<RoleRequest> getMyRequests(User user) {
-        return repo.findByUser(user);
+    // =========================
+    // DELETE (SOFT DELETE)
+    // =========================
+    public void delete(Long id) {
+
+        User manager = getCurrentUser();
+        ensureManager(manager);
+
+        RoleRequest request = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found"));
+
+        if (request.isDeleted()) {
+            throw new ForbiddenException("Already deleted");
+        }
+
+        request.setDeleted(true);
+        repo.save(request);
     }
 }

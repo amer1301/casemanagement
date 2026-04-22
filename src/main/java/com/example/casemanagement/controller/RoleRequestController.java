@@ -1,11 +1,8 @@
 package com.example.casemanagement.controller;
 
-import com.example.casemanagement.model.User;
 import com.example.casemanagement.service.RoleRequestService;
-import com.example.casemanagement.repository.UserRepository;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,47 +10,60 @@ import org.springframework.web.bind.annotation.*;
 public class RoleRequestController {
 
     private final RoleRequestService service;
-    private final UserRepository userRepository;
 
-    public RoleRequestController(RoleRequestService service,
-                                 UserRepository userRepository) {
+    public RoleRequestController(RoleRequestService service) {
         this.service = service;
-        this.userRepository = userRepository;
     }
 
-    private User getCurrentUser(Authentication auth) {
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
+    // =========================
+    // GET ALL (MANAGER)
+    // =========================
     @GetMapping
-    public ResponseEntity<?> getAll(Authentication auth) {
-        User user = getCurrentUser(auth);
-        return ResponseEntity.ok(service.getAll(user));
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<?> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
+    // =========================
+    // CREATE
+    // =========================
     @PostMapping
-    public ResponseEntity<?> create(Authentication auth) {
-        User user = getCurrentUser(auth);
-        return ResponseEntity.ok(service.createRoleRequest(user));
+    public ResponseEntity<?> create() {
+        return ResponseEntity.ok(service.createRoleRequest());
     }
 
+    // =========================
+    // GET MY
+    // =========================
     @GetMapping("/my")
-    public ResponseEntity<?> getMyRequests(Authentication auth) {
-        User user = getCurrentUser(auth);
-        return ResponseEntity.ok(service.getMyRequests(user));
+    public ResponseEntity<?> getMyRequests() {
+        return ResponseEntity.ok(service.getMyRequests());
     }
 
+    // =========================
+    // APPROVE
+    // =========================
     @PostMapping("/{id}/approve")
-    public ResponseEntity<?> approve(@PathVariable Long id, Authentication auth) {
-        User manager = getCurrentUser(auth);
-        return ResponseEntity.ok(service.approveRole(id, manager));
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<?> approve(@PathVariable Long id) {
+        return ResponseEntity.ok(service.approveRole(id));
     }
 
+    // =========================
+    // REJECT
+    // =========================
     @PostMapping("/{id}/reject")
-    public ResponseEntity<?> reject(@PathVariable Long id, Authentication auth) {
-        User manager = getCurrentUser(auth);
-        return ResponseEntity.ok(service.rejectRole(id, manager));
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<?> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(service.rejectRole(id));
+    }
+
+    // =========================
+    // DELETE (SOFT DELETE)
+    // =========================
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public void deleteRoleRequest(@PathVariable Long id) {
+        service.delete(id);
     }
 }

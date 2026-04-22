@@ -1,6 +1,7 @@
 package com.example.casemanagement.service;
 
 import com.example.casemanagement.dto.*;
+import com.example.casemanagement.exception.ForbiddenException;
 import com.example.casemanagement.exception.ResourceNotFoundException;
 import com.example.casemanagement.model.*;
 import com.example.casemanagement.repository.CaseRepository;
@@ -22,14 +23,18 @@ public class CaseService {
     private final CaseStatusService caseStatusService;
     private final RoleRequestService roleRequestService;
     private final CasePriorityService casePriorityService;
+    private final NotificationService notificationService;
 
-    public CaseService(CaseRepository repo,
-                       UserRepository userRepository,
-                       CaseLogService caseLogService,
-                       CaseMapper mapper,
-                       CaseStatusService caseStatusService,
-                       RoleRequestService roleRequestService,
-                       CasePriorityService casePriorityService) {
+    public CaseService(
+            CaseRepository repo,
+            UserRepository userRepository,
+            CaseLogService caseLogService,
+            CaseMapper mapper,
+            CaseStatusService caseStatusService,
+            RoleRequestService roleRequestService,
+            CasePriorityService casePriorityService,
+            NotificationService notificationService
+    ) {
         this.repo = repo;
         this.userRepository = userRepository;
         this.caseLogService = caseLogService;
@@ -37,6 +42,7 @@ public class CaseService {
         this.caseStatusService = caseStatusService;
         this.roleRequestService = roleRequestService;
         this.casePriorityService = casePriorityService;
+        this.notificationService = notificationService;
     }
 
     protected User getCurrentUser() {
@@ -166,9 +172,25 @@ public class CaseService {
 
         User user = getCurrentUser();
 
+        if (c.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("Cannot assign your own case");
+        }
+
+        if (c.getAssignedTo() != null) {
+            throw new ForbiddenException("Case already assigned");
+        }
+
         c.setAssignedTo(user);
 
-        return mapper.toCaseDTO(repo.save(c));
+        Case saved = repo.save(c);
+
+        notificationService.createNotification(
+                saved.getUser(),
+                "Ditt ärende \"" + saved.getTitle() + "\" har tilldelats en handläggare",
+                saved.getId()
+        );
+
+        return mapper.toCaseDTO(saved);
     }
 
     public List<AdminStatsDTO> getAdminStats() {
@@ -196,11 +218,37 @@ public class CaseService {
         Case c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
 
+        User currentUser = getCurrentUser();
+
         c.setAppealed(true);
         c.setAppealReason(reason);
         c.setStatus(CaseStatus.SUBMITTED);
 
-        return mapper.toCaseDTO(repo.save(c));
+        Case saved = repo.save(c);
+
+        caseLogService.logAction(saved, currentUser,"CASE_APPEALED");
+
+        String message = "Ärendet '" + saved.getTitle() + "' har överklagats";
+
+        if (saved.getAssignedTo() != null) {
+            notificationService.createNotification(
+                    saved.getAssignedTo(),
+                    message,
+                    saved.getId()
+            );
+        } else {
+            List<User> admins = userRepository.findByRole(Role.ADMIN);
+
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        message,
+                        saved.getId()
+                );
+            }
+        }
+
+        return mapper.toCaseDTO(saved);
     }
 
     public void updatePriority(Long id, Integer newPriority) {

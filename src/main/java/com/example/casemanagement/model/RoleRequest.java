@@ -16,6 +16,9 @@ public class RoleRequest {
     @Enumerated(EnumType.STRING)
     private RoleRequestStatus status;
 
+    @Column(name = "is_deleted")
+    private boolean deleted = false;
+
     private LocalDateTime createdAt;
 
     public RoleRequest() {}
@@ -58,5 +61,13 @@ public class RoleRequest {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }
