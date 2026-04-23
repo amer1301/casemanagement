@@ -15,7 +15,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,6 +36,7 @@ class ReportControllerTest {
     @MockBean
     private ReportService reportService;
 
+    // ===================== SUCCESS =====================
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void shouldDownloadReport() throws Exception {
@@ -51,5 +52,8 @@ class ReportControllerTest {
                         "attachment; filename=monthly-report.csv"))
                 .andExpect(header().string("Content-Type", "text/csv"))
                 .andExpect(content().bytes(csv.getBytes()));
+
+        verify(reportService).generateMonthlyReport();
     }
+
 }

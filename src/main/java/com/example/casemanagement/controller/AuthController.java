@@ -28,7 +28,7 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@RequestBody LoginRequest request) {
 
-        String token = authService.login(request); // 👈 FIX
+        String token = authService.login(request);
 
         AuthResponse response = authService.buildAuthResponse(
                 request.getEmail(),

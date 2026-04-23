@@ -9,6 +9,7 @@ import com.example.casemanagement.model.User;
 import com.example.casemanagement.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.BadCredentialsException;
 
 @Service
 public class AuthService {
@@ -42,19 +43,15 @@ public class AuthService {
 
     public String login(LoginRequest request) {
 
-        // 1. Trimma email
         String email = request.getEmail().trim();
 
-        // 2. Case-insensitive lookup
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
-        // 3. Verifiera lösenord
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
-        // 4. Generera token
         return jwtService.generateToken(
                 user.getEmail(),
                 user.getRole().name()

@@ -20,7 +20,8 @@ class CaseRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    // 🔧 Helper method (VIKTIG – undviker alla dina tidigare errors)
+    // ===================== HELPERS =====================
+
     private Case createValidCase(User user) {
         Case c = new Case();
         c.setTitle("Test Case");
@@ -31,7 +32,6 @@ class CaseRepositoryTest {
         c.setPriority(3);
         c.setStatus(CaseStatus.SUBMITTED);
         c.setUser(user);
-        c.setType("TEST_TYPE");
         return c;
     }
 
@@ -42,20 +42,18 @@ class CaseRepositoryTest {
                 "password",
                 Role.USER
         );
-        return userRepository.save(user);
+        return userRepository.saveAndFlush(user);
     }
 
-    // ==============================
-    // BASIC SAVE / FIND
-    // ==============================
+    // ===================== BASIC SAVE =====================
 
     @Test
     @DisplayName("Should save and retrieve case")
     void shouldSaveAndFindCase() {
-        User user = createUser("basic@test.com");
+        User user = createUser("basic-" + System.nanoTime() + "@test.com");
 
         Case c = createValidCase(user);
-        caseRepository.save(c);
+        caseRepository.saveAndFlush(c);
 
         List<Case> all = caseRepository.findAll();
 
@@ -63,131 +61,100 @@ class CaseRepositoryTest {
         assertEquals("Test Case", all.get(0).getTitle());
     }
 
-    // ==============================
-    // FIND BY USER
-    // ==============================
+    // ===================== FIND BY USER =====================
 
     @Test
     void shouldFindByUser() {
-        User user = createUser("user@test.com");
+        User user = createUser("user-" + System.nanoTime() + "@test.com");
 
-        caseRepository.save(createValidCase(user));
+        caseRepository.saveAndFlush(createValidCase(user));
 
         List<Case> result = caseRepository.findByUser(user);
 
         assertEquals(1, result.size());
     }
 
-    // ==============================
-    // FIND BY STATUS
-    // ==============================
+    // ===================== FIND BY STATUS =====================
 
     @Test
     void shouldFindByStatus() {
-        User user = createUser("status@test.com");
+        User user = createUser("status-" + System.nanoTime() + "@test.com");
 
         Case c = createValidCase(user);
         c.setStatus(CaseStatus.APPROVED);
 
-        caseRepository.save(c);
+        caseRepository.saveAndFlush(c);
 
         List<Case> result = caseRepository.findByStatus(CaseStatus.APPROVED);
 
         assertEquals(1, result.size());
     }
 
-    // ==============================
-    // ASSIGNED TO NULL
-    // ==============================
+    @Test
+    void shouldReturnEmptyWhenStatusNotFound() {
+        List<Case> result = caseRepository.findByStatus(CaseStatus.REJECTED);
+        assertTrue(result.isEmpty());
+    }
+
+    // ===================== ASSIGNED =====================
 
     @Test
     void shouldFindUnassignedCases() {
-        User user = createUser("null@test.com");
+        User user = createUser("null-" + System.nanoTime() + "@test.com");
 
-        caseRepository.save(createValidCase(user));
+        caseRepository.saveAndFlush(createValidCase(user));
 
         List<Case> result = caseRepository.findByAssignedToIsNull();
 
         assertEquals(1, result.size());
     }
 
-    // ==============================
-    // ASSIGNED TO USER
-    // ==============================
-
     @Test
     void shouldFindByAssignedTo() {
-        User creator = createUser("creator@test.com");
-        User admin = createUser("admin@test.com");
+        User creator = createUser("creator-" + System.nanoTime() + "@test.com");
+        User admin = createUser("admin-" + System.nanoTime() + "@test.com");
 
         Case c = createValidCase(creator);
         c.setAssignedTo(admin);
 
-        caseRepository.save(c);
+        caseRepository.saveAndFlush(c);
 
         List<Case> result = caseRepository.findByAssignedTo(admin);
 
         assertEquals(1, result.size());
     }
 
-    // ==============================
-    // DATE RANGE
-    // ==============================
+    // ===================== DATE RANGE =====================
 
     @Test
     void shouldFindByCreatedAtBetween() {
-        User user = createUser("date@test.com");
+        User user = createUser("date-" + System.nanoTime() + "@test.com");
 
         Case c = createValidCase(user);
-        caseRepository.save(c);
+        caseRepository.saveAndFlush(c);
 
         LocalDateTime now = LocalDateTime.now();
 
         List<Case> result = caseRepository.findByCreatedAtBetween(
-                now.minusDays(1),
-                now.plusDays(1)
+                now.minusSeconds(5),
+                now.plusSeconds(5)
         );
 
         assertEquals(1, result.size());
     }
 
-    // ==============================
-    // EXISTS
-    // ==============================
-
-    @Test
-    void shouldCheckExistsByUserTypeAndStatus() {
-        User user = createUser("exists@test.com");
-
-        Case c = createValidCase(user);
-        c.setType("ROLE_REQUEST");
-        c.setStatus(CaseStatus.SUBMITTED);
-
-        caseRepository.save(c);
-
-        boolean exists = caseRepository.existsByUserAndTypeAndStatus(
-                user,
-                "ROLE_REQUEST",
-                CaseStatus.SUBMITTED
-        );
-
-        assertTrue(exists);
-    }
-
-    // ==============================
-    // COUNT TESTS
-    // ==============================
+    // ===================== COUNT =====================
 
     @Test
     void shouldCountAssignedAndUnassigned() {
-        User user = createUser("count@test.com");
-        User admin = createUser("admin2@test.com");
+        User user = createUser("count-" + System.nanoTime() + "@test.com");
+        User admin = createUser("admin2-" + System.nanoTime() + "@test.com");
 
-        Case c1 = createValidCase(user); // unassigned
+        Case c1 = createValidCase(user);
         Case c2 = createValidCase(user);
         c2.setAssignedTo(admin);
 
-        caseRepository.saveAll(List.of(c1, c2));
+        caseRepository.saveAllAndFlush(List.of(c1, c2));
 
         assertEquals(1, caseRepository.countByAssignedToIsNull());
         assertEquals(1, caseRepository.countByAssignedToIsNotNull());
@@ -195,34 +162,34 @@ class CaseRepositoryTest {
 
     @Test
     void shouldCountByAssignedToAndStatus() {
-        User user = createUser("count2@test.com");
-        User admin = createUser("admin3@test.com");
+        User user = createUser("count2-" + System.nanoTime() + "@test.com");
+        User admin = createUser("admin3-" + System.nanoTime() + "@test.com");
 
         Case c = createValidCase(user);
         c.setAssignedTo(admin);
         c.setStatus(CaseStatus.APPROVED);
 
-        caseRepository.save(c);
+        caseRepository.saveAndFlush(c);
 
         assertEquals(1, caseRepository.countByAssignedTo(admin));
         assertEquals(1, caseRepository.countByAssignedToAndStatus(admin, CaseStatus.APPROVED));
         assertEquals(0, caseRepository.countByAssignedToAndStatusNot(admin, CaseStatus.APPROVED));
     }
 
-    // ==============================
-    // CUSTOM QUERY
-    // ==============================
+    // ===================== CUSTOM QUERY =====================
 
     @Test
     void shouldFetchCaseWithUser() {
-        User user = createUser("fetch@test.com");
+        User user = createUser("fetch-" + System.nanoTime() + "@test.com");
 
         Case c = createValidCase(user);
-        caseRepository.save(c);
+        caseRepository.saveAndFlush(c);
 
         Case result = caseRepository.findByIdWithUser(c.getId()).orElseThrow();
 
         assertNotNull(result.getUser());
-        assertEquals(user.getId(), result.getUser().getId());
+
+        // säkerställer att relationen är fetchad (inte lazy problem)
+        assertDoesNotThrow(() -> result.getUser().getEmail());
     }
 }

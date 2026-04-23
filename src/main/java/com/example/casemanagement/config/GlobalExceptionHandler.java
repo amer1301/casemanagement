@@ -70,4 +70,10 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, status);
     }
+
+    // 401 - login failure
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(Exception ex) {
+        return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
 }

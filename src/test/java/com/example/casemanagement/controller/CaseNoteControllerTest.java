@@ -16,13 +16,14 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,7 +47,9 @@ class CaseNoteControllerTest {
     @MockBean
     private CaseNoteService caseNoteService;
 
+    // ===================== CREATE =====================
     @Test
+    @WithMockUser
     void shouldCreateNote() throws Exception {
 
         CreateCaseNoteRequest request = new CreateCaseNoteRequest();
@@ -67,9 +70,16 @@ class CaseNoteControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.text").value("Test note"));
+
+        verify(caseNoteService).createNote(argThat(req ->
+                req.getCaseId().equals(1L) &&
+                        req.getText().equals("Test note")
+        ));
     }
 
+    // ===================== GET =====================
     @Test
+    @WithMockUser
     void shouldGetNotes() throws Exception {
 
         CaseNoteDTO note = new CaseNoteDTO(
@@ -85,5 +95,7 @@ class CaseNoteControllerTest {
         mockMvc.perform(get("/cases/1/notes"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].text").value("Note 1"));
+
+        verify(caseNoteService).getNotes(1L);
     }
 }

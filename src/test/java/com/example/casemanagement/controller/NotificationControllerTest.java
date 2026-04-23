@@ -2,7 +2,6 @@ package com.example.casemanagement.controller;
 
 import com.example.casemanagement.dto.NotificationDTO;
 import com.example.casemanagement.service.NotificationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,6 +40,7 @@ class NotificationControllerTest {
     @MockBean
     private NotificationService notificationService;
 
+    // ===================== GET ALL =====================
     @Test
     @WithMockUser
     void shouldGetNotifications() throws Exception {
@@ -59,24 +59,33 @@ class NotificationControllerTest {
         mockMvc.perform(get("/notifications"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].message").value("Test message"));
+
+        verify(notificationService).getMyNotifications();
     }
 
-    @Test
-    @WithMockUser
-    void shouldMarkAllAsRead() throws Exception {
-
-        mockMvc.perform(patch("/notifications/read-all"))
-                .andExpect(status().isOk());
-    }
-
+    // ===================== DELETE =====================
     @Test
     @WithMockUser
     void shouldDeleteNotification() throws Exception {
 
         mockMvc.perform(delete("/notifications/1"))
                 .andExpect(status().isOk());
+
+        verify(notificationService).delete(1L);
     }
 
+    // ===================== MARK ALL AS READ =====================
+    @Test
+    @WithMockUser
+    void shouldMarkAllAsRead() throws Exception {
+
+        mockMvc.perform(patch("/notifications/read-all"))
+                .andExpect(status().isOk());
+
+        verify(notificationService).markAllAsRead();
+    }
+
+    // ===================== UNREAD COUNT =====================
     @Test
     @WithMockUser
     void shouldGetUnreadCount() throws Exception {
@@ -86,5 +95,7 @@ class NotificationControllerTest {
         mockMvc.perform(get("/notifications/unread-count"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("5"));
+
+        verify(notificationService).getUnreadCount();
     }
 }
