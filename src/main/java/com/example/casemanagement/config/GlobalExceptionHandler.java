@@ -76,4 +76,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleBadCredentials(Exception ex) {
         return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler({
+            org.springframework.security.access.AccessDeniedException.class,
+            org.springframework.security.authorization.AuthorizationDeniedException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(Exception ex) {
+        return buildResponse("Access denied", HttpStatus.FORBIDDEN);
+    }
 }

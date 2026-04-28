@@ -43,7 +43,7 @@ public class SecurityConfig {
                 // Authorization regler
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🔓 Public endpoints
+                        // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(

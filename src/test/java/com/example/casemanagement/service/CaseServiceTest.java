@@ -6,6 +6,8 @@ import com.example.casemanagement.mapper.CaseMapper;
 import com.example.casemanagement.model.*;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
+import com.example.casemanagement.dto.CreateCaseDTO;
+import com.example.casemanagement.dto.UpdateCaseDTO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -197,5 +200,103 @@ class CaseServiceTest {
         assertThrows(ResourceNotFoundException.class, () ->
                 caseService.getCaseById(1L)
         );
+    }
+
+    @Test
+    void shouldThrowWhenDeletingNonExistingCase() {
+
+        when(repo.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                caseService.deleteCase(1L)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenAssigningNonExistingCase() {
+
+        when(repo.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                caseService.assignToCurrentUser(1L)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingNonExistingCase() {
+
+        UpdateCaseDTO dto = new UpdateCaseDTO();
+        dto.setTitle("New title");
+        dto.setDescription("New description");
+
+        when(repo.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                caseService.update(1L, dto)
+        );
+    }
+
+    @Test
+    void shouldUpdateCaseAndLogAction() {
+
+        Case existing = new Case();
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+
+        UpdateCaseDTO dto = new UpdateCaseDTO();
+        dto.setTitle("Updated title");
+        dto.setDescription("Updated description");
+
+        when(repo.findById(1L)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(repo.save(any())).thenReturn(existing);
+        when(mapper.toCaseDTO(any())).thenReturn(null);
+
+        caseService.update(1L, dto);
+
+        verify(caseLogService).logAction(eq(existing), eq(user), eq("CASE_UPDATED"));
+    }
+
+    @Test
+    void shouldCreateCaseAndLogAction() {
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+
+        CreateCaseDTO dto = new CreateCaseDTO();
+        dto.setTitle("Test case");
+        dto.setDescription("Test description");
+
+        Case caseEntity = new Case();
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(priorityService.determinePriority(dto)).thenReturn(1);
+        when(mapper.toCase(dto, user, 1)).thenReturn(caseEntity);
+        when(repo.save(caseEntity)).thenReturn(caseEntity);
+        when(mapper.toCaseDTO(caseEntity)).thenReturn(null);
+
+        caseService.create(dto);
+
+        verify(caseLogService).logAction(eq(caseEntity), eq(user), eq("CASE_CREATED"));
+    }
+
+    @Test
+    void shouldReturnOnlyCurrentUsersCases() {
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+
+        Case c1 = new Case();
+        Case c2 = new Case();
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(repo.findByUser(user)).thenReturn(List.of(c1, c2));
+        when(mapper.toCaseDTO(any())).thenReturn(null);
+
+        var result = caseService.getMyCases();
+
+        assertEquals(2, result.size());
+        verify(repo).findByUser(user);
     }
 }

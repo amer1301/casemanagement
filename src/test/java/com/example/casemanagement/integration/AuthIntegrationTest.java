@@ -75,7 +75,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
     void shouldBlockWithoutToken() throws Exception {
 
         mockMvc.perform(get("/cases"))
-                .andExpect(status().isForbidden()); // 👈 viktigt (inte 401)
+                .andExpect(status().isForbidden());
     }
 
     // ===================== INVALID TOKEN =====================
@@ -84,7 +84,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(get("/cases")
                         .header("Authorization", "Bearer invalid-token"))
-                .andExpect(status().isForbidden()); // 👈 viktigt
+                .andExpect(status().isForbidden());
     }
 
     // ===================== WRONG LOGIN =====================
@@ -98,6 +98,6 @@ class AuthIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
-                .andExpect(status().isUnauthorized()); // 👈 detta stämmer
+                .andExpect(status().isUnauthorized());
     }
 }
