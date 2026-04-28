@@ -12,6 +12,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller för hantering av ärenden (cases).
+ *
+ * Denna klass ansvarar för att exponera API-endpoints för klienten
+ * och delegerar all affärslogik till service-lagret.
+ *
+ * Designprinciper:
+ * - Tunn controller (ingen affärslogik)
+ * - REST-baserad struktur
+ * - Standardiserade svar via ApiResponse
+ *
+ * Säkerhet:
+ * - Kräver JWT (bearerAuth)
+ * - Viss åtkomst styrs via @PreAuthorize
+ */
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cases")
@@ -25,7 +40,17 @@ public class CaseController {
         this.caseLogService = caseLogService;
     }
 
-    // GET ALL / FILTER
+    /**
+     * Hämtar ärenden.
+     *
+     * Stödjer:
+     * - filtrering på status
+     * - paginering
+     * - sortering
+     *
+     * Valet att hantera filter här (status != null) är en enkel routing-logik,
+     * medan själva datalogiken ligger i service-lagret.
+     */
     @GetMapping
     public ApiResponse<?> getAll(
             @RequestParam(required = false) CaseStatus status,
@@ -40,26 +65,38 @@ public class CaseController {
         return new ApiResponse<>(service.getAll(page, size, sortBy).getContent());
     }
 
-    // CREATE
+    /**
+     * Skapar ett nytt ärende.
+     *
+     * Validering sker via DTO (@Valid) och affärslogik hanteras i service-lagret.
+     */
     @PostMapping
     public ApiResponse<CaseDTO> create(@Valid @RequestBody CreateCaseDTO dto) {
         return new ApiResponse<>(service.create(dto));
     }
 
-    // GET BY ID
+    /**
+     * Hämtar ett specifikt ärende baserat på ID.
+     */
     @GetMapping("/{id}")
     public ApiResponse<CaseDTO> getCaseById(@PathVariable Long id) {
         return new ApiResponse<>(service.getCaseById(id));
     }
 
-    // DELETE
+    /**
+     * Tar bort ett ärende.
+     *
+     * Eventuell loggning och validering hanteras i service-lagret.
+     */
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteCase(@PathVariable Long id) {
         service.deleteCase(id);
         return new ApiResponse<>("Case deleted");
     }
 
-    // UPDATE
+    /**
+     * Uppdaterar grundläggande information för ett ärende.
+     */
     @PutMapping("/{id}")
     public ApiResponse<CaseDTO> update(
             @PathVariable Long id,
@@ -68,7 +105,12 @@ public class CaseController {
         return new ApiResponse<>(service.update(id, dto));
     }
 
-    // UPDATE STATUS
+    /**
+     * Uppdaterar status på ett ärende.
+     *
+     * Detta är en domänspecifik operation (inte ren CRUD),
+     * där regler och tillåtna övergångar hanteras i service-lagret.
+     */
     @PatchMapping("/{id}/status")
     public ApiResponse<CaseDTO> updateStatus(
             @PathVariable Long id,
@@ -79,20 +121,31 @@ public class CaseController {
         );
     }
 
-    // LOGS
+    /**
+     * Hämtar loggar kopplade till ett ärende.
+     *
+     * Används för spårbarhet och audit logging.
+     */
     @GetMapping("/{id}/logs")
     public ApiResponse<List<CaseLogDTO>> getLogs(@PathVariable Long id) {
         return new ApiResponse<>(caseLogService.getLogs(id));
     }
 
-    // MY CASES
+    /**
+     * Hämtar endast den inloggade användarens ärenden.
+     *
+     * Filtrering baseras på användarens identitet i backend.
+     */
     @GetMapping("/my")
     public ApiResponse<List<CaseDTO>> getMyCase() {
         return new ApiResponse<>(service.getMyCases());
     }
 
-
-    // UPDATE PRIORITY
+    /**
+     * Uppdaterar prioritet på ett ärende.
+     *
+     * Endast tillåtet för ADMIN, vilket hanteras via @PreAuthorize.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/priority")
     public ApiResponse<String> updatePriority(
@@ -103,38 +156,60 @@ public class CaseController {
         return new ApiResponse<>("Priority updated");
     }
 
-
-    // DASHBOARD
+    /**
+     * Hämtar statistik för dashboard.
+     *
+     * Returnerar aggregerad data snarare än enskilda entiteter.
+     */
     @GetMapping("/dashboard")
     public ApiResponse<Map<String, Object>> dashboard() {
         return new ApiResponse<>(service.getDashboardStats());
     }
 
-    // ASSIGN CASE
+    /**
+     * Tilldelar ett ärende till den inloggade användaren.
+     *
+     * Regler (t.ex. att inte tilldela eget ärende) hanteras i service-lagret.
+     */
     @PatchMapping("/{id}/assign")
     public ApiResponse<CaseDTO> assign(@PathVariable Long id) {
         return new ApiResponse<>(service.assignToCurrentUser(id));
     }
 
-    // ADMIN STATS
+    /**
+     * Hämtar statistik per administratör.
+     */
     @GetMapping("/dashboard/admins")
     public ApiResponse<List<AdminStatsDTO>> getAdminStats() {
         return new ApiResponse<>(service.getAdminStats());
     }
 
-    // UNASSIGNED
+    /**
+     * Hämtar alla ärenden som ännu inte är tilldelade.
+     */
     @GetMapping("/unassigned")
     public ApiResponse<List<CaseDTO>> getUnassigned() {
         return new ApiResponse<>(service.getUnassignedCases());
     }
 
-    // ASSIGNED TO ME
+    /**
+     * Hämtar ärenden som är tilldelade till den aktuella användaren.
+     */
     @GetMapping("/assigned")
     public ApiResponse<List<CaseDTO>> getAssignedToMe() {
         return new ApiResponse<>(service.getMyAssignedCases());
     }
 
-    // APPEAL
+    /**
+     * Skapar en överklagan på ett ärende.
+     *
+     * Detta är en avancerad domänoperation som påverkar:
+     * - status
+     * - historik (loggar)
+     * - notifikationer
+     *
+     * All logik hanteras i service-lagret.
+     */
     @PostMapping("/{id}/appeal")
     public ApiResponse<CaseDTO> appealCase(
             @PathVariable Long id,

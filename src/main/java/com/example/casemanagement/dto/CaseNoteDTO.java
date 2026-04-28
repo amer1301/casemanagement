@@ -2,6 +2,25 @@ package com.example.casemanagement.dto;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO för anteckningar kopplade till ett ärende.
+ *
+ * Används för att överföra information om kommentarer/anteckningar
+ * från backend till frontend.
+ *
+ * Innehåller:
+ * - själva anteckningen (text)
+ * - vem som skapade den
+ * - när den skapades
+ *
+ * Syfte:
+ * - Möjliggöra visning av historik och kommunikation kring ett ärende
+ * - Separera intern datamodell från API-respons
+ *
+ * Design:
+ * - Immutable via konstruktor (inga setters)
+ * - Endast dataöverföring, ingen affärslogik
+ */
 public class CaseNoteDTO {
     private Long id;
     private String text;

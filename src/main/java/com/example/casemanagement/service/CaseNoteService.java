@@ -14,6 +14,18 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Service för hantering av anteckningar kopplade till ärenden.
+ *
+ * Ansvar:
+ * - Skapa nya anteckningar
+ * - Hämta anteckningar för ett ärende
+ *
+ * Design:
+ * - Hämtar aktuell användare via SecurityContext
+ * - Använder mapper för konvertering mellan DTO och Entity
+ * - Håller affärslogik separerad från controller och repository
+ */
 @Service
 public class CaseNoteService {
 
@@ -32,6 +44,12 @@ public class CaseNoteService {
         this.mapper = mapper;
     }
 
+    /**
+     * Hämtar den aktuellt inloggade användaren.
+     *
+     * Använder Spring Securitys SecurityContext för att identifiera
+     * vem som utför operationen.
+     */
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
@@ -41,26 +59,44 @@ public class CaseNoteService {
                 .orElseThrow();
     }
 
-    // SKAPA ANTECKNING
+    /**
+     * Skapar en ny anteckning kopplad till ett ärende.
+     *
+     * Flöde:
+     * 1. Hämta ärendet
+     * 2. Hämta aktuell användare
+     * 3. Skapa anteckning via mapper
+     * 4. Spara och returnera DTO
+     */
     public CaseNoteDTO createNote(CreateCaseNoteRequest request) {
 
+        // Hämta ärende
         Case c = caseRepo.findById(request.getCaseId())
                 .orElseThrow();
 
+        // Hämta aktuell användare
         User user = getCurrentUser();
 
+        // Skapa anteckning
         CaseNote note = mapper.toCaseNote(
                 request.getText(),
                 c,
                 user
         );
 
+        // Spara och returnera DTO
         return mapper.toCaseNoteDTO(
                 noteRepo.save(note)
         );
     }
 
-    // HÄMTA ANTECKNINGAR
+    /**
+     * Hämtar alla anteckningar för ett specifikt ärende.
+     *
+     * Flöde:
+     * 1. Hämta från repository
+     * 2. Mappa till DTO
+     */
     public List<CaseNoteDTO> getNotes(Long caseId) {
         return noteRepo.findByCaseEntityId(caseId)
                 .stream()

@@ -2,6 +2,23 @@ package com.example.casemanagement.dto;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO för överföring av ärendedata mellan backend och frontend.
+ *
+ * Syfte:
+ * - Exponera endast relevant information från Case-entiteten
+ * - Undvika att skicka hela databasmodellen direkt till klienten
+ * - Möjliggöra anpassning av data för UI (t.ex. namn istället för ID)
+ *
+ * Innehåller både:
+ * - grundläggande ärendedata (titel, status, datum)
+ * - användarrelaterad information (email, assignedToName)
+ * - domänspecifika fält (rejectionReason, appeal, priority)
+ *
+ * Design:
+ * - Separat från entitet för att minska koppling mellan lager
+ * - Flexibel struktur för att stödja olika vyer i frontend (dashboard, detaljer, listor)
+ */
 public class CaseDTO {
 
     private Long id;
@@ -20,9 +37,17 @@ public class CaseDTO {
     private String personalNumber;
     private Integer priority;
 
+    /**
+     * Tom konstruktor används vid t.ex. deserialisering.
+     */
     public CaseDTO() {
     }
 
+    /**
+     * Förenklad konstruktor för grundläggande data.
+     *
+     * Används exempelvis vid listvyer där inte all information behövs.
+     */
     public CaseDTO(Long id,
                    String title,
                    String description,

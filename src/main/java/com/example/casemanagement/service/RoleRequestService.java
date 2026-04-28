@@ -11,6 +11,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Service för hantering av rollbegäranden.
+ *
+ * Ansvar:
+ * - Skapa rollbegäran (USER → ADMIN)
+ * - Godkänna eller avslå begäran (MANAGER)
+ * - Hämta begäranden
+ * - Soft delete
+ *
+ * Design:
+ * - Implementerar ett enkelt workflow-system
+ * - Säkerställer att endast manager får hantera begäranden
+ * - Förhindrar duplicerade aktiva begäranden
+ */
 @Service
 public class RoleRequestService {
 
@@ -25,9 +39,9 @@ public class RoleRequestService {
         this.repo = repo;
     }
 
-    // =========================
-    // HELPER
-    // =========================
+    /**
+     * Hämtar aktuell användare via SecurityContext.
+     */
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
@@ -37,15 +51,21 @@ public class RoleRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
+    /**
+     * Säkerställer att användaren är manager.
+     */
     private void ensureManager(User user) {
         if (user.getRole() != Role.MANAGER) {
             throw new ForbiddenException("Only manager allowed");
         }
     }
 
-    // =========================
-    // CREATE
-    // =========================
+    /**
+     * Skapar en ny rollbegäran.
+     *
+     * Regler:
+     * - Endast en aktiv (PENDING) begäran per användare
+     */
     public RoleRequest createRoleRequest() {
 
         User user = getCurrentUser();
@@ -64,9 +84,13 @@ public class RoleRequestService {
         return repo.save(request);
     }
 
-    // =========================
-    // APPROVE
-    // =========================
+    /**
+     * Godkänner en rollbegäran.
+     *
+     * Effekt:
+     * - Användaren uppgraderas till ADMIN
+     * - Begäran markeras som APPROVED
+     */
     public RoleRequest approveRole(Long id) {
 
         User manager = getCurrentUser();
@@ -92,9 +116,9 @@ public class RoleRequestService {
         return repo.save(r);
     }
 
-    // =========================
-    // REJECT
-    // =========================
+    /**
+     * Avslår en rollbegäran.
+     */
     public RoleRequest rejectRole(Long id) {
 
         User manager = getCurrentUser();
@@ -116,9 +140,9 @@ public class RoleRequestService {
         return repo.save(r);
     }
 
-    // =========================
-    // GET ALL (MANAGER)
-    // =========================
+    /**
+     * Hämtar alla aktiva rollbegäranden (endast manager).
+     */
     public List<RoleRequest> getAll() {
 
         User user = getCurrentUser();
@@ -127,9 +151,9 @@ public class RoleRequestService {
         return repo.findByDeletedFalse();
     }
 
-    // =========================
-    // GET MY REQUESTS
-    // =========================
+    /**
+     * Hämtar aktuella användarens egna begäranden.
+     */
     public List<RoleRequest> getMyRequests() {
 
         User user = getCurrentUser();
@@ -137,9 +161,9 @@ public class RoleRequestService {
         return repo.findByUserAndDeletedFalse(user);
     }
 
-    // =========================
-    // DELETE (SOFT DELETE)
-    // =========================
+    /**
+     * Soft delete av rollbegäran (endast manager).
+     */
     public void delete(Long id) {
 
         User manager = getCurrentUser();

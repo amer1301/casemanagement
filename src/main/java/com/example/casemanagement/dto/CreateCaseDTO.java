@@ -4,10 +4,28 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import com.example.casemanagement.model.CaseCategory;
 
+/**
+ * DTO för skapande av nya ärenden.
+ *
+ * Representerar indata från klienten vid POST-anrop och används
+ * för att validera inkommande data innan den når affärslogiken.
+ *
+ * Validering:
+ * - @NotBlank säkerställer att obligatoriska fält inte är tomma
+ * - @Size begränsar längden på textfält
+ *
+ * Syfte:
+ * - Skydda systemet från ogiltig indata
+ * - Separera API-kontrakt från intern datamodell
+ *
+ * Design:
+ * - Används tillsammans med @Valid i controller
+ * - Validering sker automatiskt via Jakarta Validation
+ */
 public class CreateCaseDTO {
 
     @NotBlank(message = "Titeln får inte vara tom")
-        @Size(min = 3, max = 100, message = "Titeln måste vara mellan 3 och 100 tecken")
+    @Size(min = 3, max = 100, message = "Titeln måste vara mellan 3 och 100 tecken")
     private String title;
 
     @NotBlank(message = "Beskrivning får inte vara tom")

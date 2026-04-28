@@ -2,6 +2,26 @@ package com.example.casemanagement.dto;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO för notifieringar.
+ *
+ * Representerar meddelanden som skickas till användaren vid olika händelser
+ * i systemet, exempelvis statusändringar eller tilldelning av ärenden.
+ *
+ * Innehåller:
+ * - meddelandetext
+ * - koppling till relaterat ärende (caseId)
+ * - lässtatus (isRead)
+ * - tidsstämpel för när notifieringen skapades
+ *
+ * Syfte:
+ * - Möjliggöra visning av notifieringar i användargränssnittet
+ * - Ge användaren återkoppling på systemhändelser
+ *
+ * Design:
+ * - Separat från entitet för att kontrollera vilken information som exponeras
+ * - Immutable via konstruktor (inga setters)
+ */
 public class NotificationDTO {
 
     private Long id;

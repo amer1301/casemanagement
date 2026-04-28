@@ -13,6 +13,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+/**
+ * Central service för hantering av ärenden (Case).
+ *
+ * Ansvar:
+ * - CRUD-operationer för ärenden
+ * - Affärslogik (t.ex. tilldelning, överklagan, filtrering)
+ * - Samordning mellan olika services (status, loggning, notifieringar)
+ *
+ * Design:
+ * - Fungerar som applikationens "core service"
+ * - Delegerar specialiserad logik till andra services
+ * - Använder mapper för DTO-konvertering
+ * - Hämtar aktuell användare via SecurityContext
+ */
 @Service
 public class CaseService {
 
@@ -45,6 +59,9 @@ public class CaseService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * Hämtar den aktuellt inloggade användaren via Spring Security.
+     */
     protected User getCurrentUser() {
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
@@ -54,11 +71,17 @@ public class CaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
+    /**
+     * Hämtar alla ärenden med pagination och sortering.
+     */
     public Page<CaseDTO> getAll(int page, int size, String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
         return repo.findAll(pageable).map(mapper::toCaseDTO);
     }
 
+    /**
+     * Hämtar ärenden för aktuell användare.
+     */
     public List<CaseDTO> getMyCases() {
         User user = getCurrentUser();
         return repo.findByUser(user)
@@ -67,6 +90,16 @@ public class CaseService {
                 .toList();
     }
 
+    /**
+     * Skapar ett nytt ärende.
+     *
+     * Flöde:
+     * - Hämta användare
+     * - Bestäm prioritet
+     * - Skapa entity
+     * - Spara
+     * - Logga händelse
+     */
     public CaseDTO create(CreateCaseDTO dto) {
 
         User user = getCurrentUser();
@@ -81,6 +114,9 @@ public class CaseService {
         return mapper.toCaseDTO(saved);
     }
 
+    /**
+     * Hämtar ett specifikt ärende.
+     */
     public CaseDTO getCaseById(Long id) {
         Case c = repo.findByIdWithUser(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
@@ -88,6 +124,9 @@ public class CaseService {
         return mapper.toCaseDTO(c);
     }
 
+    /**
+     * Tar bort ett ärende och loggar händelsen.
+     */
     public void deleteCase(Long id) {
         Case c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
@@ -96,6 +135,9 @@ public class CaseService {
         repo.delete(c);
     }
 
+    /**
+     * Uppdaterar titel och beskrivning.
+     */
     public CaseDTO update(Long id, UpdateCaseDTO dto) {
         Case existing = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
@@ -110,6 +152,9 @@ public class CaseService {
         return mapper.toCaseDTO(saved);
     }
 
+    /**
+     * Uppdaterar status via CaseStatusService (separerad affärslogik).
+     */
     public CaseDTO updateStatus(Long id, CaseStatus newStatus, String reason) {
 
         User currentUser = getCurrentUser();
@@ -122,6 +167,9 @@ public class CaseService {
         return mapper.toCaseDTO(updated);
     }
 
+    /**
+     * Hämtar ärenden baserat på status (endast manager).
+     */
     public List<CaseDTO> getByStatus(CaseStatus status) {
         User user = getCurrentUser();
 
@@ -135,6 +183,9 @@ public class CaseService {
                 .toList();
     }
 
+    /**
+     * Hämtar alla ej tilldelade ärenden.
+     */
     public List<CaseDTO> getUnassignedCases() {
         return repo.findByAssignedToIsNull()
                 .stream()
@@ -142,6 +193,9 @@ public class CaseService {
                 .toList();
     }
 
+    /**
+     * Hämtar ärenden tilldelade aktuell användare.
+     */
     public List<CaseDTO> getMyAssignedCases() {
         User user = getCurrentUser();
 
@@ -151,6 +205,9 @@ public class CaseService {
                 .toList();
     }
 
+    /**
+     * Returnerar statistik för dashboard.
+     */
     public Map<String, Object> getDashboardStats() {
 
         long total = repo.count();
@@ -165,6 +222,9 @@ public class CaseService {
         return stats;
     }
 
+    /**
+     * Tilldelar ärende till aktuell användare (admin/handläggare).
+     */
     public CaseDTO assignToCurrentUser(Long caseId) {
 
         Case c = repo.findById(caseId)
@@ -172,10 +232,12 @@ public class CaseService {
 
         User user = getCurrentUser();
 
+        // Säkerhetsregel: man får inte ta sitt eget ärende
         if (c.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException("Cannot assign your own case");
         }
 
+        // Säkerhetsregel: ärendet får inte redan vara tilldelat
         if (c.getAssignedTo() != null) {
             throw new ForbiddenException("Case already assigned");
         }
@@ -184,6 +246,7 @@ public class CaseService {
 
         Case saved = repo.save(c);
 
+        // Skapa notifiering till ägaren
         notificationService.createNotification(
                 saved.getUser(),
                 "Ditt ärende \"" + saved.getTitle() + "\" har tilldelats en handläggare",
@@ -193,6 +256,9 @@ public class CaseService {
         return mapper.toCaseDTO(saved);
     }
 
+    /**
+     * Returnerar statistik per admin.
+     */
     public List<AdminStatsDTO> getAdminStats() {
 
         List<User> admins = userRepository.findByRole(Role.ADMIN);
@@ -213,6 +279,9 @@ public class CaseService {
         }).toList();
     }
 
+    /**
+     * Hanterar överklagan av ett ärende.
+     */
     public CaseDTO appealCase(Long id, String reason) {
 
         Case c = repo.findById(id)
@@ -230,6 +299,7 @@ public class CaseService {
 
         String message = "Ärendet '" + saved.getTitle() + "' har överklagats";
 
+        // Notifiera ansvarig eller alla admins
         if (saved.getAssignedTo() != null) {
             notificationService.createNotification(
                     saved.getAssignedTo(),
@@ -251,6 +321,9 @@ public class CaseService {
         return mapper.toCaseDTO(saved);
     }
 
+    /**
+     * Delegerar prioriteringsuppdatering till separat service.
+     */
     public void updatePriority(Long id, Integer newPriority) {
         casePriorityService.updatePriority(id, newPriority);
     }

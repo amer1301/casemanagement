@@ -15,9 +15,27 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+/**
+ * Mapper för transformation mellan domänmodeller (entities)
+ * och DTO:er relaterade till ärenden.
+ *
+ * Syfte:
+ * - Separera datamodell från API-representation
+ * - Samla all mappningslogik på ett ställe
+ * - Minska duplicering av transformationskod i service-lagret
+ *
+ * Design:
+ * - Används av service-lagret för att konvertera mellan lager
+ * - Hanterar både inkommande (DTO → entity) och utgående (entity → DTO)
+ */
 @Component
 public class CaseMapper {
 
+    /**
+     * Skapar en loggpost för ett ärende.
+     *
+     * Används för att registrera händelser i systemet (audit logging).
+     */
     public CaseLog toCaseLog(Case c, User user, String action) {
         CaseLog log = new CaseLog();
         log.setCaseEntity(c);
@@ -27,6 +45,11 @@ public class CaseMapper {
         return log;
     }
 
+    /**
+     * Omvandlar CaseLog-entitet till DTO.
+     *
+     * Används för att exponera loggdata till klienten.
+     */
     public CaseLogDTO toCaseLogDTO(CaseLog log) {
         return new CaseLogDTO(
                 log.getId(),
@@ -37,19 +60,33 @@ public class CaseMapper {
         );
     }
 
+    /**
+     * Skapar en ny anteckning kopplad till ett ärende.
+     */
     public CaseNote toCaseNote(String text, Case c, User user) {
         return new CaseNote(text, c, user);
     }
 
+    /**
+     * Omvandlar CaseNote-entitet till DTO.
+     *
+     * Anpassar data för visning i frontend (t.ex. namn istället för ID).
+     */
     public CaseNoteDTO toCaseNoteDTO(CaseNote n) {
         return new CaseNoteDTO(
                 n.getId(),
                 n.getText(),
-                n.getCreatedBy().getName(), // justera om behövs
-                n.getCreatedAt()            // justera om behövs
+                n.getCreatedBy().getName(),
+                n.getCreatedAt()
         );
     }
 
+    /**
+     * Omvandlar Case-entitet till DTO.
+     *
+     * Innehåller både grunddata och UI-anpassad information,
+     * exempelvis användarnamn istället för interna identifierare.
+     */
     public CaseDTO toCaseDTO(Case c) {
         CaseDTO dto = new CaseDTO(
                 c.getId(),
@@ -81,6 +118,17 @@ public class CaseMapper {
         return dto;
     }
 
+    /**
+     * Omvandlar CreateCaseDTO till Case-entitet.
+     *
+     * Initialiserar:
+     * - status (SUBMITTED)
+     * - prioritet (beräknad i service-lagret)
+     * - skapandedatum
+     *
+     * Notering:
+     * - Affärslogik (t.ex. prioritering) hanteras inte här
+     */
     public Case toCase(CreateCaseDTO dto, User user, int priority) {
         Case c = new Case();
 

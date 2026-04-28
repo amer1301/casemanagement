@@ -11,12 +11,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DataInitializer {
 
+    /**
+     * Initialiserar systemet med en standard Manager-användare vid uppstart.
+     *
+     * Syftet är att säkerställa att administrativa funktioner alltid är åtkomliga,
+     * även i en ny eller tom databasmiljö.
+     *
+     * Implementationen kontrollerar om en användare med rollen MANAGER redan finns
+     * för att undvika duplicering. Detta gör initialiseringen idempotent, vilket
+     * innebär att den kan köras flera gånger utan att skapa inkonsistent data.
+     */
     @Bean
     CommandLineRunner initManager(UserRepository userRepository,
                                   PasswordEncoder passwordEncoder) {
         return args -> {
 
-            // Säkerställ att endast en manager finns
+            // Kontrollera om en manager redan existerar för att undvika flera administrativa konton
             if (!userRepository.existsByRole(Role.MANAGER)) {
 
                 User manager = new User(
@@ -28,6 +38,7 @@ public class DataInitializer {
 
                 userRepository.save(manager);
 
+                // Loggning för att tydliggöra att initialisering har skett (används främst i utvecklingsmiljö)
                 System.out.println("Manager created at startup");
             }
         };

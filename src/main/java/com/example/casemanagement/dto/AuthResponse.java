@@ -1,5 +1,20 @@
 package com.example.casemanagement.dto;
 
+/**
+ * DTO för autentiseringssvar vid inloggning.
+ *
+ * Innehåller:
+ * - JWT-token för autentiserade anrop
+ * - grundläggande användarinformation (email, namn, roll)
+ *
+ * Syfte:
+ * - Ge klienten all nödvändig information direkt efter inloggning
+ * - Undvika extra anrop för att hämta användardata
+ *
+ * Design:
+ * - Endast dataöverföring, ingen affärslogik
+ * - Immutable via konstruktor (inga setters)
+ */
 public class AuthResponse {
 
     private String token;
