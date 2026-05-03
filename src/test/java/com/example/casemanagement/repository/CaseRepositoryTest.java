@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -85,15 +86,20 @@ class CaseRepositoryTest {
 
         caseRepository.saveAndFlush(c);
 
-        List<Case> result = caseRepository.findByStatus(CaseStatus.APPROVED);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        assertEquals(1, result.size());
+        Page<Case> result = caseRepository.findByStatus(CaseStatus.APPROVED, pageable);
+
+        assertEquals(1, result.getContent().size());
     }
 
     @Test
     void shouldReturnEmptyWhenStatusNotFound() {
-        List<Case> result = caseRepository.findByStatus(CaseStatus.REJECTED);
-        assertTrue(result.isEmpty());
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<Case> result = caseRepository.findByStatus(CaseStatus.REJECTED, pageable);
+
+        assertTrue(result.getContent().isEmpty());
     }
 
     // ===================== ASSIGNED =====================
@@ -176,6 +182,31 @@ class CaseRepositoryTest {
         assertEquals(0, caseRepository.countByAssignedToAndStatusNot(admin, CaseStatus.APPROVED));
     }
 
+    // ===================== SEARCH (FIXAD) =====================
+
+    @Test
+    void shouldSearchCasesWithPagination() {
+        User user = createUser("search-" + System.nanoTime() + "@test.com");
+
+        Case c1 = createValidCase(user);
+        c1.setTitle("Housing support");
+
+        Case c2 = createValidCase(user);
+        c2.setTitle("Study allowance");
+
+        caseRepository.saveAllAndFlush(List.of(c1, c2));
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<Case> result = caseRepository.searchUnassignedCases(
+                null,
+                "Housing",
+                pageable
+        );
+
+        assertEquals(1, result.getContent().size());
+    }
+
     // ===================== CUSTOM QUERY =====================
 
     @Test
@@ -188,8 +219,6 @@ class CaseRepositoryTest {
         Case result = caseRepository.findByIdWithUser(c.getId()).orElseThrow();
 
         assertNotNull(result.getUser());
-
-        // säkerställer att relationen är fetchad (inte lazy problem)
         assertDoesNotThrow(() -> result.getUser().getEmail());
     }
 }

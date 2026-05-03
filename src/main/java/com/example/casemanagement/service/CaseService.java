@@ -74,9 +74,34 @@ public class CaseService {
     /**
      * Hämtar alla ärenden med pagination och sortering.
      */
-    public Page<CaseDTO> getAll(int page, int size, String sortBy) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
-        return repo.findAll(pageable).map(mapper::toCaseDTO);
+    public Page<CaseDTO> getAll(
+            int page,
+            int size,
+            String sortBy,
+            String direction,
+            CaseStatus status,
+            String q,
+            Long assignedTo
+    ) {
+        User user = getCurrentUser();
+
+        Sort sort = direction.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        if (user.getRole() == Role.MANAGER) {
+            return repo.searchAllCases(status, q, assignedTo, pageable)
+                    .map(mapper::toCaseDTO);
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+            return repo.searchUnassignedCases(status, q, pageable)
+                    .map(mapper::toCaseDTO);
+        }
+
+        throw new ForbiddenException("Access denied");
     }
 
     /**
@@ -84,7 +109,8 @@ public class CaseService {
      */
     public List<CaseDTO> getMyCases() {
         User user = getCurrentUser();
-        return repo.findByUser(user)
+
+        return repo.findByAssignedTo(user)
                 .stream()
                 .map(mapper::toCaseDTO)
                 .toList();
@@ -165,22 +191,6 @@ public class CaseService {
         Case updated = caseStatusService.updateStatus(c, newStatus, reason, currentUser);
 
         return mapper.toCaseDTO(updated);
-    }
-
-    /**
-     * Hämtar ärenden baserat på status (endast manager).
-     */
-    public List<CaseDTO> getByStatus(CaseStatus status) {
-        User user = getCurrentUser();
-
-        if (user.getRole() != Role.MANAGER) {
-            return List.of();
-        }
-
-        return repo.findByStatus(status)
-                .stream()
-                .map(mapper::toCaseDTO)
-                .toList();
     }
 
     /**

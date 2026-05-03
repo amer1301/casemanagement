@@ -87,8 +87,15 @@ class CaseControllerTest {
     @WithMockUser
     void shouldGetAllCases() throws Exception {
 
-        when(caseService.getAll(anyInt(), anyInt(), anyString()))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(caseService.getAll(
+                anyInt(),
+                anyInt(),
+                anyString(),
+                anyString(),
+                any(),
+                any(),
+                any()
+        )).thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/cases"))
                 .andExpect(status().isOk());
@@ -253,9 +260,17 @@ class CaseControllerTest {
 
     @Test
     @WithMockUser
-    void shouldGetCasesByStatus() throws Exception {
+    void shouldFilterCasesByStatus() throws Exception {
 
-        when(caseService.getByStatus(any())).thenReturn(List.of());
+        when(caseService.getAll(
+                anyInt(),
+                anyInt(),
+                anyString(),
+                anyString(),
+                eq(CaseStatus.SUBMITTED),
+                any(),
+                any()
+        )).thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/cases")
                         .param("status", "SUBMITTED"))
