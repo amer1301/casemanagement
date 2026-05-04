@@ -62,9 +62,21 @@ class SecurityIntegrationTest extends BaseIntegrationTest {
 
     private String loginManager() throws Exception {
 
+        String email = "manager-" + UUID.randomUUID() + "@test.com";
+
+        RegisterRequest register = new RegisterRequest();
+        register.setName("Manager");
+        register.setEmail(email);
+        register.setPassword("password");
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk());
+
         LoginRequest login = new LoginRequest();
-        login.setEmail("manager@system.local");
-        login.setPassword("manager123");
+        login.setEmail(email);
+        login.setPassword("password");
 
         String response = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

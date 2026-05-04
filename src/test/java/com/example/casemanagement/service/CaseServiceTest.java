@@ -64,15 +64,28 @@ class CaseServiceTest {
     @Test
     void shouldReturnPagedCases() {
 
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+
+        when(userRepository.findByEmail("test@test.com"))
+                .thenReturn(Optional.of(user));
+
         Case c1 = new Case();
+        c1.setUser(user);
+
         Case c2 = new Case();
+        c2.setUser(user);
 
         Page<Case> page = new PageImpl<>(List.of(c1, c2));
 
         when(repo.searchUnassignedCases(any(), any(), any(Pageable.class)))
                 .thenReturn(page);
 
-        when(mapper.toCaseDTO(any())).thenReturn(new CaseDTO());
+        CaseDTO dto1 = new CaseDTO();
+        CaseDTO dto2 = new CaseDTO();
+
+        when(mapper.toCaseDTO(c1)).thenReturn(dto1);
+        when(mapper.toCaseDTO(c2)).thenReturn(dto2);
 
         Page<CaseDTO> result = caseService.getAll(
                 0,
@@ -243,12 +256,22 @@ class CaseServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
 
-        Case c1 = new Case();
-        Case c2 = new Case();
+        when(userRepository.findByEmail("test@test.com"))
+                .thenReturn(Optional.of(user));
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        Case c1 = new Case();
+        c1.setUser(user);
+
+        Case c2 = new Case();
+        c2.setUser(user);
+
         when(repo.findByUser(user)).thenReturn(List.of(c1, c2));
-        when(mapper.toCaseDTO(any())).thenReturn(new CaseDTO());
+
+        CaseDTO dto1 = new CaseDTO();
+        CaseDTO dto2 = new CaseDTO();
+
+        when(mapper.toCaseDTO(c1)).thenReturn(dto1);
+        when(mapper.toCaseDTO(c2)).thenReturn(dto2);
 
         var result = caseService.getMyCases();
 

@@ -44,7 +44,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User registered successfully"));
 
-        // ===== LOGIN =====
+// ===== LOGIN =====
         LoginRequest login = new LoginRequest();
         login.setEmail(email);
         login.setPassword("password");
@@ -64,8 +64,8 @@ class AuthIntegrationTest extends BaseIntegrationTest {
         assertNotNull(token);
         assertFalse(token.isBlank());
 
-        // ===== ACCESS PROTECTED =====
-        mockMvc.perform(get("/cases")
+// ===== ACCESS PROTECTED =====
+        mockMvc.perform(get("/cases?page=0&size=10")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
     }
@@ -74,7 +74,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldBlockWithoutToken() throws Exception {
 
-        mockMvc.perform(get("/cases"))
+        mockMvc.perform(get("/cases?page=0&size=10"))
                 .andExpect(status().isForbidden());
     }
 
@@ -82,7 +82,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldBlockWithInvalidToken() throws Exception {
 
-        mockMvc.perform(get("/cases")
+        mockMvc.perform(get("/cases?page=0&size=10")
                         .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isForbidden());
     }
