@@ -3,10 +3,12 @@ package com.example.casemanagement.service;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.repository.CaseRepository;
 import org.springframework.stereotype.Service;
-
+import com.example.casemanagement.repository.UserRepository;
+import com.example.casemanagement.dto.AdminStatsDTO;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service för generering av rapporter.
@@ -25,10 +27,45 @@ import java.util.List;
 public class ReportService {
 
     private final CaseRepository caseRepository;
+    private final UserRepository userRepository;
 
-    public ReportService(CaseRepository caseRepository) {
+    public ReportService(CaseRepository caseRepository,
+                         UserRepository userRepository) {
         this.caseRepository = caseRepository;
+        this.userRepository = userRepository;
     }
+
+        public List<AdminStatsDTO> getAdminStats() {
+
+            List<Case> cases = caseRepository.findAll();
+
+            return userRepository.findAll().stream()
+                    .filter(user -> user.getRole().name().equals("ADMIN"))
+                    .map(admin -> {
+
+                        long total = cases.stream()
+                                .filter(c -> admin.equals(c.getAssignedTo()))
+                                .count();
+
+                        long handled = cases.stream()
+                                .filter(c -> admin.equals(c.getAssignedTo()))
+                                .filter(c -> c.getStatus().name().equals("APPROVED"))
+                                .count();
+
+                        long pending = cases.stream()
+                                .filter(c -> admin.equals(c.getAssignedTo()))
+                                .filter(c -> c.getStatus().name().equals("SUBMITTED"))
+                                .count();
+
+                        return new AdminStatsDTO(
+                                admin.getName(),
+                                total,
+                                handled,
+                                pending
+                        );
+                    })
+                    .collect(Collectors.toList());
+        }
 
     /**
      * Genererar en månadsrapport över ärenden.

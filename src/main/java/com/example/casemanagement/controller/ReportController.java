@@ -4,6 +4,9 @@ import com.example.casemanagement.service.ReportService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import com.example.casemanagement.dto.AdminStatsDTO;
+import com.example.casemanagement.repository.UserRepository;
 
 import java.nio.charset.StandardCharsets;
 
@@ -54,5 +57,10 @@ public class ReportController {
 
                 // Konverterar sträng till byte-array för filöverföring
                 .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
+    @PreAuthorize("hasRole('MANAGER')")
+    @GetMapping("/admin-stats")
+    public List<AdminStatsDTO> getAdminStats() {
+        return reportService.getAdminStats();
     }
 }

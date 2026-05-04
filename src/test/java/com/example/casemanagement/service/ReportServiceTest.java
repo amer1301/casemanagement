@@ -3,7 +3,9 @@ package com.example.casemanagement.service;
 import com.example.casemanagement.model.Case;
 import com.example.casemanagement.model.CaseStatus;
 import com.example.casemanagement.repository.CaseRepository;
+import com.example.casemanagement.repository.UserRepository;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -15,8 +17,20 @@ import static org.mockito.Mockito.*;
 
 class ReportServiceTest {
 
-    private final CaseRepository repo = mock(CaseRepository.class);
-    private final ReportService service = new ReportService(repo);
+    private CaseRepository caseRepository;
+    private UserRepository userRepository;
+
+    private ReportService reportService;
+
+    // ===================== SETUP =====================
+
+    @BeforeEach
+    void setUp() {
+        caseRepository = mock(CaseRepository.class);
+        userRepository = mock(UserRepository.class);
+
+        reportService = new ReportService(caseRepository, userRepository); // ✅ korrekt
+    }
 
     // ===================== HELPERS =====================
 
@@ -38,10 +52,10 @@ class ReportServiceTest {
                 createCase(CaseStatus.REJECTED)
         );
 
-        when(repo.findByCreatedAtBetween(any(), any()))
+        when(caseRepository.findByCreatedAtBetween(any(), any()))
                 .thenReturn(cases);
 
-        String result = service.generateMonthlyReport();
+        String result = reportService.generateMonthlyReport();
 
         String expected =
                 "Typ,Antal\n" +
@@ -58,10 +72,10 @@ class ReportServiceTest {
     @Test
     void shouldReturnZeroReportWhenNoCases() {
 
-        when(repo.findByCreatedAtBetween(any(), any()))
+        when(caseRepository.findByCreatedAtBetween(any(), any()))
                 .thenReturn(List.of());
 
-        String result = service.generateMonthlyReport();
+        String result = reportService.generateMonthlyReport();
 
         String expected =
                 "Typ,Antal\n" +
@@ -83,10 +97,10 @@ class ReportServiceTest {
                 createCase(CaseStatus.APPROVED)
         );
 
-        when(repo.findByCreatedAtBetween(any(), any()))
+        when(caseRepository.findByCreatedAtBetween(any(), any()))
                 .thenReturn(cases);
 
-        String result = service.generateMonthlyReport();
+        String result = reportService.generateMonthlyReport();
 
         assertTrue(result.contains("Hanterade,2"));
         assertTrue(result.contains("Ej hanterade,0"));
@@ -103,10 +117,10 @@ class ReportServiceTest {
                 createCase(CaseStatus.SUBMITTED)
         );
 
-        when(repo.findByCreatedAtBetween(any(), any()))
+        when(caseRepository.findByCreatedAtBetween(any(), any()))
                 .thenReturn(cases);
 
-        String result = service.generateMonthlyReport();
+        String result = reportService.generateMonthlyReport();
 
         assertTrue(result.contains("Ej hanterade,2"));
         assertTrue(result.contains("Hanterade,0"));
@@ -118,15 +132,15 @@ class ReportServiceTest {
     @Test
     void shouldCallRepositoryWithDateRange() {
 
-        when(repo.findByCreatedAtBetween(any(), any()))
+        when(caseRepository.findByCreatedAtBetween(any(), any()))
                 .thenReturn(List.of());
 
-        service.generateMonthlyReport();
+        reportService.generateMonthlyReport();
 
         ArgumentCaptor<LocalDateTime> startCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
         ArgumentCaptor<LocalDateTime> endCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
 
-        verify(repo).findByCreatedAtBetween(startCaptor.capture(), endCaptor.capture());
+        verify(caseRepository).findByCreatedAtBetween(startCaptor.capture(), endCaptor.capture());
 
         LocalDateTime start = startCaptor.getValue();
         LocalDateTime end = endCaptor.getValue();
@@ -134,7 +148,6 @@ class ReportServiceTest {
         assertNotNull(start);
         assertNotNull(end);
 
-        // sanity check: start ska vara före end
         assertTrue(start.isBefore(end));
     }
 }
