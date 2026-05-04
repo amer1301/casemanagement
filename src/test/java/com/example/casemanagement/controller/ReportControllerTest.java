@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
+import java.nio.charset.StandardCharsets;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 
@@ -51,7 +51,7 @@ class ReportControllerTest {
                 .andExpect(header().string("Content-Disposition",
                         "attachment; filename=monthly-report.csv"))
                 .andExpect(header().string("Content-Type", "text/csv"))
-                .andExpect(content().bytes(csv.getBytes()));
+                .andExpect(content().bytes(csv.getBytes(StandardCharsets.UTF_8)));
 
         verify(reportService).generateMonthlyReport();
     }

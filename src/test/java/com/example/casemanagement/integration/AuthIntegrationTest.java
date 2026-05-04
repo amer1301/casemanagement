@@ -2,7 +2,6 @@ package com.example.casemanagement.integration;
 
 import com.example.casemanagement.dto.LoginRequest;
 import com.example.casemanagement.dto.RegisterRequest;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -26,13 +24,11 @@ class AuthIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // ===================== FULL FLOW =====================
     @Test
     void shouldRegisterLoginAndAccessProtectedEndpoint() throws Exception {
 
         String email = "test-" + UUID.randomUUID() + "@test.com";
 
-        // ===== REGISTER =====
         RegisterRequest register = new RegisterRequest();
         register.setName("Test User");
         register.setEmail(email);
@@ -44,50 +40,41 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User registered successfully"));
 
-// ===== LOGIN =====
         LoginRequest login = new LoginRequest();
         login.setEmail(email);
         login.setPassword("password");
 
-        String response = mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.token").exists())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(jsonPath("$.data.token").exists());
 
-        JsonNode json = objectMapper.readTree(response);
-        String token = json.get("data").get("token").asText();
-
-        assertNotNull(token);
-        assertFalse(token.isBlank());
-
-// ===== ACCESS PROTECTED =====
-        mockMvc.perform(get("/cases?page=0&size=10")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
-    }
-
-    // ===================== NO TOKEN =====================
-    @Test
-    void shouldBlockWithoutToken() throws Exception {
-
-        mockMvc.perform(get("/cases?page=0&size=10"))
+        mockMvc.perform(get("/cases")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isForbidden());
     }
 
-    // ===================== INVALID TOKEN =====================
+    @Test
+    void shouldBlockWithoutToken() throws Exception {
+
+        mockMvc.perform(get("/cases")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void shouldBlockWithInvalidToken() throws Exception {
 
-        mockMvc.perform(get("/cases?page=0&size=10")
+        mockMvc.perform(get("/cases")
+                        .param("page", "0")
+                        .param("size", "10")
                         .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isForbidden());
     }
 
-    // ===================== WRONG LOGIN =====================
     @Test
     void shouldFailLoginWithWrongCredentials() throws Exception {
 

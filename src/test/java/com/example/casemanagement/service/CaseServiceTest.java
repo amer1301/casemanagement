@@ -37,6 +37,8 @@ class CaseServiceTest {
 
     private CaseService caseService;
 
+    private User mockUser;
+
     @BeforeEach
     void setup() {
         caseService = new CaseService(
@@ -57,6 +59,14 @@ class CaseServiceTest {
         when(context.getAuthentication()).thenReturn(auth);
 
         SecurityContextHolder.setContext(context);
+
+        mockUser = mock(User.class);
+        when(mockUser.getEmail()).thenReturn("test@test.com");
+
+        when(mockUser.getRole()).thenReturn(Role.ADMIN);
+
+        when(userRepository.findByEmail("test@test.com"))
+                .thenReturn(Optional.of(mockUser));
     }
 
     // ===================== GET ALL =====================
@@ -64,28 +74,19 @@ class CaseServiceTest {
     @Test
     void shouldReturnPagedCases() {
 
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
-
         Case c1 = new Case();
-        c1.setUser(user);
+        c1.setUser(mockUser);
 
         Case c2 = new Case();
-        c2.setUser(user);
+        c2.setUser(mockUser);
 
         Page<Case> page = new PageImpl<>(List.of(c1, c2));
 
         when(repo.searchUnassignedCases(any(), any(), any(Pageable.class)))
                 .thenReturn(page);
 
-        CaseDTO dto1 = new CaseDTO();
-        CaseDTO dto2 = new CaseDTO();
-
-        when(mapper.toCaseDTO(c1)).thenReturn(dto1);
-        when(mapper.toCaseDTO(c2)).thenReturn(dto2);
+        when(mapper.toCaseDTO(c1)).thenReturn(new CaseDTO());
+        when(mapper.toCaseDTO(c2)).thenReturn(new CaseDTO());
 
         Page<CaseDTO> result = caseService.getAll(
                 0,
@@ -109,17 +110,13 @@ class CaseServiceTest {
 
         Case c = new Case();
 
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-
         when(repo.findById(1L)).thenReturn(Optional.of(c));
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(statusService.updateStatus(any(), any(), any(), any())).thenReturn(c);
         when(mapper.toCaseDTO(any())).thenReturn(new CaseDTO());
 
         caseService.updateStatus(1L, CaseStatus.APPROVED, "ok");
 
-        verify(statusService).updateStatus(eq(c), eq(CaseStatus.APPROVED), eq("ok"), eq(user));
+        verify(statusService).updateStatus(eq(c), eq(CaseStatus.APPROVED), eq("ok"), eq(mockUser));
     }
 
     @Test
@@ -139,21 +136,18 @@ class CaseServiceTest {
         User owner = mock(User.class);
         when(owner.getId()).thenReturn(2L);
 
-        User admin = mock(User.class);
-        when(admin.getId()).thenReturn(1L);
-        when(admin.getEmail()).thenReturn("test@test.com");
+        when(mockUser.getId()).thenReturn(1L);
 
         Case c = new Case();
         c.setUser(owner);
 
         when(repo.findById(10L)).thenReturn(Optional.of(c));
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(admin));
         when(repo.save(any())).thenReturn(c);
         when(mapper.toCaseDTO(any())).thenReturn(new CaseDTO());
 
         caseService.assignToCurrentUser(10L);
 
-        assertEquals(admin, c.getAssignedTo());
+        assertEquals(mockUser, c.getAssignedTo());
 
         verify(notificationService).createNotification(
                 eq(owner),
@@ -165,15 +159,12 @@ class CaseServiceTest {
     @Test
     void shouldNotAllowAssigningOwnCase() {
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(1L);
-        when(user.getEmail()).thenReturn("test@test.com");
+        when(mockUser.getId()).thenReturn(1L);
 
         Case c = new Case();
-        c.setUser(user);
+        c.setUser(mockUser);
 
         when(repo.findById(1L)).thenReturn(Optional.of(c));
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
 
         assertThrows(ForbiddenException.class, () ->
                 caseService.assignToCurrentUser(1L)
@@ -187,16 +178,12 @@ class CaseServiceTest {
 
         Case c = new Case();
 
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-
         when(repo.findById(1L)).thenReturn(Optional.of(c));
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
 
         caseService.deleteCase(1L);
 
         verify(repo).delete(c);
-        verify(caseLogService).logAction(eq(c), eq(user), eq("CASE_DELETED"));
+        verify(caseLogService).logAction(eq(c), eq(mockUser), eq("CASE_DELETED"));
     }
 
     // ===================== UPDATE =====================
@@ -206,21 +193,17 @@ class CaseServiceTest {
 
         Case existing = new Case();
 
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-
         UpdateCaseDTO dto = new UpdateCaseDTO();
         dto.setTitle("Updated title");
         dto.setDescription("Updated description");
 
         when(repo.findById(1L)).thenReturn(Optional.of(existing));
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(repo.save(any())).thenReturn(existing);
         when(mapper.toCaseDTO(any())).thenReturn(new CaseDTO());
 
         caseService.update(1L, dto);
 
-        verify(caseLogService).logAction(eq(existing), eq(user), eq("CASE_UPDATED"));
+        verify(caseLogService).logAction(eq(existing), eq(mockUser), eq("CASE_UPDATED"));
     }
 
     // ===================== CREATE =====================
@@ -228,24 +211,20 @@ class CaseServiceTest {
     @Test
     void shouldCreateCaseAndLogAction() {
 
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-
         CreateCaseDTO dto = new CreateCaseDTO();
         dto.setTitle("Test case");
         dto.setDescription("Test description");
 
         Case caseEntity = new Case();
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(priorityService.determinePriority(dto)).thenReturn(1);
-        when(mapper.toCase(dto, user, 1)).thenReturn(caseEntity);
+        when(mapper.toCase(dto, mockUser, 1)).thenReturn(caseEntity);
         when(repo.save(caseEntity)).thenReturn(caseEntity);
         when(mapper.toCaseDTO(caseEntity)).thenReturn(new CaseDTO());
 
         caseService.create(dto);
 
-        verify(caseLogService).logAction(eq(caseEntity), eq(user), eq("CASE_CREATED"));
+        verify(caseLogService).logAction(eq(caseEntity), eq(mockUser), eq("CASE_CREATED"));
     }
 
     // ===================== MY CASES =====================
@@ -253,29 +232,21 @@ class CaseServiceTest {
     @Test
     void shouldReturnOnlyCurrentUsersCases() {
 
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
-
         Case c1 = new Case();
-        c1.setUser(user);
+        c1.setAssignedTo(mockUser);
 
         Case c2 = new Case();
-        c2.setUser(user);
+        c2.setAssignedTo(mockUser);
 
-        when(repo.findByUser(user)).thenReturn(List.of(c1, c2));
+        when(repo.findByAssignedTo(mockUser)).thenReturn(List.of(c1, c2));
 
-        CaseDTO dto1 = new CaseDTO();
-        CaseDTO dto2 = new CaseDTO();
-
-        when(mapper.toCaseDTO(c1)).thenReturn(dto1);
-        when(mapper.toCaseDTO(c2)).thenReturn(dto2);
+        when(mapper.toCaseDTO(c1)).thenReturn(new CaseDTO());
+        when(mapper.toCaseDTO(c2)).thenReturn(new CaseDTO());
 
         var result = caseService.getMyCases();
 
         assertEquals(2, result.size());
-        verify(repo).findByUser(user);
+
+        verify(repo).findByAssignedTo(mockUser);
     }
 }

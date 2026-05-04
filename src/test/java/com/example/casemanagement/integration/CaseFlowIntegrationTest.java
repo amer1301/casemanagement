@@ -4,7 +4,7 @@ import com.example.casemanagement.model.*;
 import com.example.casemanagement.repository.CaseNoteRepository;
 import com.example.casemanagement.repository.CaseRepository;
 import com.example.casemanagement.repository.UserRepository;
-
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@AutoConfigureMockMvc
 class CaseFlowIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
