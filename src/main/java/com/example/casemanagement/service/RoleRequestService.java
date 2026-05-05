@@ -30,13 +30,16 @@ public class RoleRequestService {
 
     private final UserRepository userRepository;
     private final RoleRequestRepository repo;
+    private final NotificationService notificationService;
 
     public RoleRequestService(
             UserRepository userRepository,
-            RoleRequestRepository repo
+            RoleRequestRepository repo,
+            NotificationService notificationService
     ) {
         this.userRepository = userRepository;
         this.repo = repo;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -90,6 +93,7 @@ public class RoleRequestService {
      * Effekt:
      * - Användaren uppgraderas till ADMIN
      * - Begäran markeras som APPROVED
+     * - Skapar notifiering till användaren
      */
     public RoleRequest approveRole(Long id) {
 
@@ -113,11 +117,21 @@ public class RoleRequestService {
 
         r.setStatus(RoleRequestStatus.APPROVED);
 
-        return repo.save(r);
+        RoleRequest saved = repo.save(r);
+
+        notificationService.createNotification(
+                user,
+                "Din admin-begäran har blivit godkänd",
+                null // ingen case koppling
+        );
+
+        return saved;
     }
 
     /**
      * Avslår en rollbegäran.
+     *  * - Begäran markeras som REJECTED
+     *  * - Skapar notifiering till användaren
      */
     public RoleRequest rejectRole(Long id) {
 
@@ -137,7 +151,15 @@ public class RoleRequestService {
 
         r.setStatus(RoleRequestStatus.REJECTED);
 
-        return repo.save(r);
+        RoleRequest saved = repo.save(r);
+
+        notificationService.createNotification(
+                r.getUser(),
+                "Din admin-begäran har blivit avslagen",
+                null
+        );
+
+        return saved;
     }
 
     /**

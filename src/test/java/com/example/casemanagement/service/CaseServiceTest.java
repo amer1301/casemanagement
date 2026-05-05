@@ -233,12 +233,12 @@ class CaseServiceTest {
     void shouldReturnOnlyCurrentUsersCases() {
 
         Case c1 = new Case();
-        c1.setAssignedTo(mockUser);
+        c1.setUser(mockUser);
 
         Case c2 = new Case();
-        c2.setAssignedTo(mockUser);
+        c2.setUser(mockUser);
 
-        when(repo.findByAssignedTo(mockUser)).thenReturn(List.of(c1, c2));
+        when(repo.findByUser(mockUser)).thenReturn(List.of(c1, c2)); // 🔥 också fixad
 
         when(mapper.toCaseDTO(c1)).thenReturn(new CaseDTO());
         when(mapper.toCaseDTO(c2)).thenReturn(new CaseDTO());
@@ -247,6 +247,6 @@ class CaseServiceTest {
 
         assertEquals(2, result.size());
 
-        verify(repo).findByAssignedTo(mockUser);
+        verify(repo).findByUser(mockUser);
     }
 }
