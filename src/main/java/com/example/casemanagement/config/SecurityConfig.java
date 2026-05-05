@@ -45,8 +45,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Aktiverar CORS för att tillåta anrop från frontend (t.ex. annan port)
-                .cors(cors -> {})
+                // KOPPLA CORS KONFIGURATIONEN
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // CSRF skydd inaktiveras eftersom API:et är stateless och använder JWT
                 .csrf(csrf -> csrf.disable())
