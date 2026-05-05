@@ -110,12 +110,11 @@ public class CaseService {
     public List<CaseDTO> getMyCases() {
         User user = getCurrentUser();
 
-        return repo.findByAssignedTo(user)
+        return repo.findByUser(user)
                 .stream()
                 .map(mapper::toCaseDTO)
                 .toList();
     }
-
     /**
      * Skapar ett nytt ärende.
      *
@@ -132,6 +131,8 @@ public class CaseService {
         int priority = casePriorityService.determinePriority(dto);
 
         Case c = mapper.toCase(dto, user, priority);
+
+        c.setUser(user);
 
         Case saved = repo.save(c);
 
