@@ -6,6 +6,7 @@ import com.example.casemanagement.service.CaseLogService;
 import com.example.casemanagement.service.CaseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,26 +35,20 @@ import java.util.Map;
 @RequestMapping("/cases")
 public class CaseController {
 
-    private final CaseService service;
+    private final CaseService caseService;
     private final CaseLogService caseLogService;
 
-    public CaseController(CaseService service, CaseLogService caseLogService) {
-        this.service = service;
+    public CaseController(CaseService caseService, CaseLogService caseLogService) {
+        this.caseService = caseService;
         this.caseLogService = caseLogService;
     }
 
     /**
      * Hämtar ärenden med stöd för:
-     *
      * - Pagination (page, size)
      * - Sortering (sortBy)
      * - Filtrering (status)
      * - Sökning (q)
-     *
-     * Detta är en "unified endpoint" som ersätter tidigare enklare filtrering.
-     *
-     * Exempel:
-     * /cases?page=0&size=10&status=SUBMITTED&q=akut
      */
     @GetMapping
     public ApiResponse<?> getAll(
@@ -66,19 +61,16 @@ public class CaseController {
             @RequestParam(required = false) Long assignedTo
     ) {
         return new ApiResponse<>(
-                service.getAll(page, size, sortBy, direction, status, q, assignedTo)
+                caseService.getAll(page, size, sortBy, direction, status, q, assignedTo)
         );
     }
 
     /**
      * Skapar ett nytt ärende.
-     *
-     * - Validering sker via DTO (@Valid)
-     * - Prioritet sätts automatiskt i service-lagret
      */
     @PostMapping
     public ApiResponse<CaseDTO> create(@Valid @RequestBody CreateCaseDTO dto) {
-        return new ApiResponse<>(service.create(dto));
+        return new ApiResponse<>(caseService.create(dto));
     }
 
     /**
@@ -86,17 +78,15 @@ public class CaseController {
      */
     @GetMapping("/{id}")
     public ApiResponse<CaseDTO> getCaseById(@PathVariable Long id) {
-        return new ApiResponse<>(service.getCaseById(id));
+        return new ApiResponse<>(caseService.getCaseById(id));
     }
 
     /**
      * Tar bort ett ärende.
-     *
-     * Loggning sker i service-lagret.
      */
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteCase(@PathVariable Long id) {
-        service.deleteCase(id);
+        caseService.deleteCase(id);
         return new ApiResponse<>("Case deleted");
     }
 
@@ -106,18 +96,13 @@ public class CaseController {
     @PutMapping("/{id}")
     public ApiResponse<CaseDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateCaseDTO dto) {
-
-        return new ApiResponse<>(service.update(id, dto));
+            @Valid @RequestBody UpdateCaseDTO dto
+    ) {
+        return new ApiResponse<>(caseService.update(id, dto));
     }
 
     /**
      * Uppdaterar status på ett ärende.
-     *
-     * Affärsregler:
-     * - Endast ADMIN
-     * - Får ej hantera eget ärende
-     * - Endast SUBMITTED → APPROVED/REJECTED
      */
     @PatchMapping("/{id}/status")
     public ApiResponse<CaseDTO> updateStatus(
@@ -125,14 +110,12 @@ public class CaseController {
             @Valid @RequestBody UpdateCaseStatusDTO dto
     ) {
         return new ApiResponse<>(
-                service.updateStatus(id, dto.getStatus(), dto.getReason())
+                caseService.updateStatus(id, dto.getStatus(), dto.getReason())
         );
     }
 
     /**
      * Hämtar loggar kopplade till ett ärende.
-     *
-     * Används för historik och spårbarhet.
      */
     @GetMapping("/{id}/logs")
     public ApiResponse<List<CaseLogDTO>> getLogs(@PathVariable Long id) {
@@ -144,13 +127,11 @@ public class CaseController {
      */
     @GetMapping("/my")
     public ApiResponse<List<CaseDTO>> getMyCase() {
-        return new ApiResponse<>(service.getMyCases());
+        return new ApiResponse<>(caseService.getMyCases());
     }
 
     /**
-     * Uppdaterar prioritet.
-     *
-     * Endast ADMIN har tillgång.
+     * Uppdaterar prioritet (endast ADMIN).
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/priority")
@@ -158,16 +139,16 @@ public class CaseController {
             @PathVariable Long id,
             @RequestBody UpdatePriorityRequest request
     ) {
-        service.updatePriority(id, request.getPriority());
+        caseService.updatePriority(id, request.getPriority());
         return new ApiResponse<>("Priority updated");
     }
 
     /**
-     * Dashboard-data (aggregat).
+     * Dashboard-data.
      */
     @GetMapping("/dashboard")
     public ApiResponse<Map<String, Object>> dashboard() {
-        return new ApiResponse<>(service.getDashboardStats());
+        return new ApiResponse<>(caseService.getDashboardStats());
     }
 
     /**
@@ -175,7 +156,7 @@ public class CaseController {
      */
     @PatchMapping("/{id}/assign")
     public ApiResponse<CaseDTO> assign(@PathVariable Long id) {
-        return new ApiResponse<>(service.assignToCurrentUser(id));
+        return new ApiResponse<>(caseService.assignToCurrentUser(id));
     }
 
     /**
@@ -183,7 +164,7 @@ public class CaseController {
      */
     @GetMapping("/dashboard/admins")
     public ApiResponse<List<AdminStatsDTO>> getAdminStats() {
-        return new ApiResponse<>(service.getAdminStats());
+        return new ApiResponse<>(caseService.getAdminStats());
     }
 
     /**
@@ -191,7 +172,7 @@ public class CaseController {
      */
     @GetMapping("/unassigned")
     public ApiResponse<List<CaseDTO>> getUnassigned() {
-        return new ApiResponse<>(service.getUnassignedCases());
+        return new ApiResponse<>(caseService.getUnassignedCases());
     }
 
     /**
@@ -199,16 +180,11 @@ public class CaseController {
      */
     @GetMapping("/assigned")
     public ApiResponse<List<CaseDTO>> getAssignedToMe() {
-        return new ApiResponse<>(service.getMyAssignedCases());
+        return new ApiResponse<>(caseService.getMyAssignedCases());
     }
 
     /**
      * Skapar en överklagan.
-     *
-     * Påverkar:
-     * - status
-     * - historik
-     * - notifikationer
      */
     @PostMapping("/{id}/appeal")
     public ApiResponse<CaseDTO> appealCase(
@@ -216,7 +192,19 @@ public class CaseController {
             @RequestBody Map<String, String> body
     ) {
         return new ApiResponse<>(
-                service.appealCase(id, body.get("reason"))
+                caseService.appealCase(id, body.get("reason"))
         );
+    }
+
+    /**
+     * Tar bort en anteckning.
+     *
+     * - Endast ADMIN/MANAGER (kontrolleras i service)
+     * - Används från frontend för att radera notes
+     */
+    @DeleteMapping("/notes/{noteId}")
+    public ResponseEntity<Void> deleteNote(@PathVariable Long noteId) {
+        caseService.deleteNote(noteId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -9,7 +9,7 @@ import com.example.casemanagement.repository.UserRepository;
 import com.example.casemanagement.dto.CreateCaseDTO;
 import com.example.casemanagement.dto.UpdateCaseDTO;
 import com.example.casemanagement.dto.CaseDTO;
-
+import com.example.casemanagement.repository.CaseNoteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +34,7 @@ class CaseServiceTest {
     private RoleRequestService roleRequestService = mock(RoleRequestService.class);
     private CasePriorityService priorityService = mock(CasePriorityService.class);
     private NotificationService notificationService = mock(NotificationService.class);
+    private CaseNoteRepository caseNoteRepository = mock(CaseNoteRepository.class);
 
     private CaseService caseService;
 
@@ -49,7 +50,8 @@ class CaseServiceTest {
                 statusService,
                 roleRequestService,
                 priorityService,
-                notificationService
+                notificationService,
+                caseNoteRepository
         );
 
         SecurityContext context = mock(SecurityContext.class);

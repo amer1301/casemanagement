@@ -10,6 +10,7 @@ import com.example.casemanagement.mapper.CaseMapper;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.example.casemanagement.repository.CaseNoteRepository;
 
 import java.util.*;
 
@@ -38,6 +39,7 @@ public class CaseService {
     private final RoleRequestService roleRequestService;
     private final CasePriorityService casePriorityService;
     private final NotificationService notificationService;
+    private final CaseNoteRepository caseNoteRepository;
 
     public CaseService(
             CaseRepository repo,
@@ -47,7 +49,8 @@ public class CaseService {
             CaseStatusService caseStatusService,
             RoleRequestService roleRequestService,
             CasePriorityService casePriorityService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            CaseNoteRepository caseNoteRepository
     ) {
         this.repo = repo;
         this.userRepository = userRepository;
@@ -57,6 +60,7 @@ public class CaseService {
         this.roleRequestService = roleRequestService;
         this.casePriorityService = casePriorityService;
         this.notificationService = notificationService;
+        this.caseNoteRepository = caseNoteRepository;
     }
 
     /**
@@ -337,5 +341,30 @@ public class CaseService {
      */
     public void updatePriority(Long id, Integer newPriority) {
         casePriorityService.updatePriority(id, newPriority);
+    }
+
+    /**
+     * Tar bort en anteckning kopplad till ett ärende.
+     *
+     * Regler:
+     * - Endast ADMIN eller MANAGER får ta bort anteckningar
+     * - Anteckningen måste existera
+     *
+     * Effekt:
+     * - Anteckningen tas bort permanent från databasen
+     */
+    public void deleteNote(Long noteId) {
+
+        User currentUser = getCurrentUser();
+
+        if (currentUser.getRole() != Role.ADMIN &&
+                currentUser.getRole() != Role.MANAGER) {
+            throw new ForbiddenException("Endast admin får ta bort anteckningar");
+        }
+
+        CaseNote note = caseNoteRepository.findById(noteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+
+        caseNoteRepository.delete(note);
     }
 }
