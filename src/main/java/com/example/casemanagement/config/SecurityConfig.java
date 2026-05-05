@@ -122,7 +122,10 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // Tillåter anrop från frontend
-        config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+        config.setAllowedOrigins(java.util.List.of(
+                "http://localhost:5173",
+                "https://casemanagement-frontend.onrender.com"
+        ));
 
         // Tillåter alla HTTP-metoder (GET, POST, PUT, DELETE, etc.)
         config.setAllowedMethods(java.util.List.of("*"));
