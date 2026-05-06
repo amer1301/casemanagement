@@ -58,10 +58,11 @@ public class CaseController {
             @RequestParam(defaultValue = "desc") String direction,
             @RequestParam(required = false) CaseStatus status,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) Long assignedTo
+            @RequestParam(required = false) Long assignedTo,
+            @RequestParam(required = false) Integer priority
     ) {
         return new ApiResponse<>(
-                caseService.getAll(page, size, sortBy, direction, status, q, assignedTo)
+                caseService.getAll(page, size, sortBy, direction, status, q, assignedTo, priority)
         );
     }
 

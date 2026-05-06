@@ -94,6 +94,7 @@ class CaseControllerTest {
                 anyString(),
                 any(),
                 any(),
+                any(),
                 any()
         )).thenReturn(new PageImpl<>(List.of()));
 
@@ -268,6 +269,7 @@ class CaseControllerTest {
                 anyString(),
                 anyString(),
                 eq(CaseStatus.SUBMITTED),
+                any(),
                 any(),
                 any()
         )).thenReturn(new PageImpl<>(List.of()));

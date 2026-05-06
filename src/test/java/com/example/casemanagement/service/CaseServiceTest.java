@@ -84,8 +84,12 @@ class CaseServiceTest {
 
         Page<Case> page = new PageImpl<>(List.of(c1, c2));
 
-        when(repo.searchUnassignedCases(any(), any(), any(Pageable.class)))
-                .thenReturn(page);
+        when(repo.searchUnassignedCases(
+                any(),
+                any(),
+                any(),
+                any(Pageable.class)
+        )).thenReturn(page);
 
         when(mapper.toCaseDTO(c1)).thenReturn(new CaseDTO());
         when(mapper.toCaseDTO(c2)).thenReturn(new CaseDTO());
@@ -97,12 +101,18 @@ class CaseServiceTest {
                 "desc",
                 null,
                 null,
+                null,
                 null
         );
 
         assertEquals(2, result.getContent().size());
 
-        verify(repo).searchUnassignedCases(any(), any(), any(Pageable.class));
+        verify(repo).searchUnassignedCases(
+                any(),
+                any(),
+                any(),
+                any(Pageable.class)
+        );
     }
 
     // ===================== UPDATE STATUS =====================

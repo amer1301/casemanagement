@@ -100,20 +100,22 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
      * Denna metod används för avancerad listning i frontend (filter + search).
      */
     @Query("""
-            SELECT c FROM Case c
-            WHERE c.assignedTo IS NULL
-            AND (:status IS NULL OR c.status = :status)
-            AND (
-              :q IS NULL OR :q = '' OR
-              LOWER(c.title) LIKE CONCAT('%', LOWER(:q), '%') OR
-              LOWER(c.description) LIKE CONCAT('%', LOWER(:q), '%') OR
-              LOWER(c.applicantName) LIKE CONCAT('%', LOWER(:q), '%') OR
-              c.personalNumber LIKE CONCAT('%', :q, '%')
-            )
-            """)
+        SELECT c FROM Case c
+        WHERE c.assignedTo IS NULL
+        AND (:status IS NULL OR c.status = :status)
+        AND (:priority IS NULL OR c.priority = :priority)
+        AND (
+          :q IS NULL OR :q = '' OR
+          LOWER(c.title) LIKE CONCAT('%', LOWER(:q), '%') OR
+          LOWER(c.description) LIKE CONCAT('%', LOWER(:q), '%') OR
+          LOWER(c.applicantName) LIKE CONCAT('%', LOWER(:q), '%') OR
+          c.personalNumber LIKE CONCAT('%', :q, '%')
+        )
+        """)
     Page<Case> searchUnassignedCases(
             @Param("status") CaseStatus status,
             @Param("q") String q,
+            @Param("priority") Integer priority,
             Pageable pageable
     );
 
@@ -123,6 +125,7 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     @Query("""
 SELECT c FROM Case c
 WHERE (:status IS NULL OR c.status = :status)
+AND (:priority IS NULL OR c.priority = :priority)
 AND (
   :q IS NULL OR :q = '' OR
   LOWER(c.title) LIKE CONCAT('%', LOWER(:q), '%')
@@ -137,6 +140,7 @@ AND (
             @Param("status") CaseStatus status,
             @Param("q") String q,
             @Param("assignedTo") Long assignedTo,
+            @Param("priority") Integer priority,
             Pageable pageable
     );
 }

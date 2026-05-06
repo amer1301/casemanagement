@@ -201,6 +201,7 @@ class CaseRepositoryTest {
         Page<Case> result = caseRepository.searchUnassignedCases(
                 null,
                 "Housing",
+                null,
                 pageable
         );
 

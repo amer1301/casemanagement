@@ -85,23 +85,37 @@ public class CaseService {
             String direction,
             CaseStatus status,
             String q,
-            Long assignedTo
+            Long assignedTo,
+            Integer priority
     ) {
         User user = getCurrentUser();
 
-        Sort sort = direction.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        Sort sort;
+
+        if (sortBy.equals("priority")) {
+
+            sort = Sort.by(sortDirection, "priority")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        } else {
+
+            sort = Sort.by(sortDirection, sortBy)
+                    .and(Sort.by(Sort.Direction.DESC, "priority"));
+        }
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
         if (user.getRole() == Role.MANAGER) {
-            return repo.searchAllCases(status, q, assignedTo, pageable)
+            return repo.searchAllCases(status, q, assignedTo, priority, pageable)
                     .map(mapper::toCaseDTO);
         }
 
         if (user.getRole() == Role.ADMIN) {
-            return repo.searchUnassignedCases(status, q, pageable)
+            return repo.searchUnassignedCases(status, q, priority, pageable)
                     .map(mapper::toCaseDTO);
         }
 
