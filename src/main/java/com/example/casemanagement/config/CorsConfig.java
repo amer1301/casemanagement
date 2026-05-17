@@ -22,8 +22,9 @@ public class CorsConfig {
 
         config.setAllowCredentials(true);
 
-        // 🔥 DIN FRONTEND URL
+        // FRONTEND URL
         config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
                 "https://casemanagement-frontend.onrender.com"
         ));
 
